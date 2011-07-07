@@ -23,7 +23,7 @@ node-packages:
 	$(NPM) install iconv@1.0.0
 	$(NPM) install jade@0.9.1
 	$(NPM) install log4js@0.2.3
-	$(NPM) install node-dev@0.0.5
+	$(NPM) install node-dev@0.1.5
 	$(NPM) install qs@0.0.5
 	$(NPM) install socket.io@0.6.17
 	$(NPM) install underscore@1.1.4
