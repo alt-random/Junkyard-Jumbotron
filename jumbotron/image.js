@@ -5,12 +5,39 @@ var fs = require('fs');
 var path = require('path');
 var url = require('url');
 var gm = require('gm');
+var exec = require('child_process').exec;
 var params = require('./params');
 var utils = require('./utils');
 var Queue = require('./queue');
 var Base = require('./base');
 var Viewport = require('./viewport');
-var exec = require('child_process').exec;
+var ffmpeg = require('./ffmpeg');
+// FFMPEG FUNCTION::::::::::::::::::::::::::::::::::::::::: TODO: Make it into a npm package.
+// thumb makes thumbnails
+//ping retrieves informations
+//general is a filler, it returns info in a useless form.
+var ffmpeg = function(type, input, output){
+    var prefix = '',
+    suffix = '';
+    switch(type){
+    case 'thumb':
+        prefix = 'ffmpeg -y -i';
+        suffix = '-ss 0 -vframes 1 -s 150x150 -an';
+        break;
+    case 'ping':
+        prefix = 'ffprobe -show_streams -show_files';
+        break;
+    case 'general':
+        prefix = 'ffprobe';
+        break;
+    }
+    var command = prefix+' '+input+' '+suffix+' '+output;
+    exec(command, function(err, stdout, stderr) {
+        console.log(err, stdout, stderr); // remove after debug
+        return err, stdout, stderr;
+    });
+}
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 // Constructor
 function Image(options) {
@@ -135,14 +162,7 @@ Image.getSampleImageFiles = function getSampleImageFiles(cb) {
 };
 
 Image._makeThumbnail = function _makeThumbnail(src, dst, width, height, cb) {
-    var scale_x = width*0.1;
-    var scale_y = height*0.1;
-    var comm = 'ffmpeg -y -i '+ src + ' -ss 0 -vframes 1 -s ' + 150 + "x" + 150 + ' -an '+ dst;
-    exec(comm, function(err, stdout, stderr) {
-        if (err){
-	        return callback.call(err, stdout, stderr, comm);
-        }
-    });
+    ffmpeg('thumb', src, dst);
 };
 
 Image.makeThumbnail = function makeThumbnail(fileName, size, cb) {
