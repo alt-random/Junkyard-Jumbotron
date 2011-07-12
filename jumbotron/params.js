@@ -7,7 +7,7 @@ module.exports = {
 
     // Server listens on this port. NOTE: If you change this, also
     // change it in the apache configs and in jjclient.js.
-    port: 80,
+    port: 8080,
 
     // Regexp for allowable jumbotron names
     jumbotronRegExp:  /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/,
@@ -28,7 +28,8 @@ module.exports = {
     allowedFileTypes: { jpg : 1,
 			jpeg: 1,
 			png : 1,
-			gif : 1 },
+			gif : 1,
+            ogv : 1 },
     maxFileSize: 2.5, // Individual file size limit, in megabytes
     //UNUSEDmaxTotalSize: 100, // Total limit per jumbotron
 

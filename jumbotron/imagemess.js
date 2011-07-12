@@ -1,6 +1,7 @@
 // ======================================================================
 // Image
 
+
 var fs = require('fs');
 var path = require('path');
 var url = require('url');
@@ -11,8 +12,20 @@ var Queue = require('./queue');
 var Base = require('./base');
 var Viewport = require('./viewport');
 var exec = require('child_process').exec;
-
 // Constructor
+function ffmpeg(callback){
+    var self = this;
+    //var cmd = "gm identify -ping -verbose " + self.source;
+    var cmd2 = 'ffprobe -show_streams -show_files' + self.source;
+    exec(cmd2, function(err, stdout, stderr) {
+    var stringout = '' + stdout; // coerce into string for sure
+    var pieces = stringout.replace(/=/g,"\n").split('\n'); //make an array 
+	var data = ([parseInt(pieces[pieces.indexOf("width")+1]), parseInt(pieces[pieces.indexOf("height")+1]), pieces[pieces.indexOf("codec_name")+1].toLowerCase(), 200,
+	parseInt(pieces[pieces.indexOf("size")+1].toLowerCase())]);
+    return data;
+});
+}
+
 function Image(options) {
     Base.call(this, options);
 
@@ -60,25 +73,23 @@ Image.prototype = utils.inherits(Base, {
     init: function init(cb) {
 
 	// Try to identify the file
-	var gmImg = gm(this.source);
-	gmImg.identify(function(err, data) {
-	    if (err) {
-		if (err.code == 1)
-		    err = 'bad image';
-		return cb && cb(err);
-	    }
-	    if (! (data.format &&
-		   data.format.toLowerCase() in params.allowedFileTypes))
+	var ffmpegimg = ffmpeg(this.source);
+	    if (! (ffmpegimg[2] &&
+		   ffmpegimg[2].toLowerCase() in params.allowedFileTypes))
 		return cb && cb('bad image');
 
 	    // Save format info
-	    this.format = data.format;
-	    this.width = data.size.width;
-	    this.height = data.size.height;
-	    this.viewport = new Viewport(data.size);
+	    this.width = ffmpegimg[0];
+	    this.height = ffmpegimg[1];
+        this.format = ffmpegimg[2];
+        var size = 
+		    { width : ffmpegimg[0],
+		      height: ffmpegimg[1] 
+		    };
+	    this.viewport = new Viewport(size);
 	    // TODO? check if ext and format don't match
 
-	    // Reorient if needed
+	   /* // Reorient if needed
 	    if (data.exif) {
 		var angle = {1:0, 3:180, 6:90, 8:270}[data.exif.orientation];
 		if (angle) {
@@ -87,11 +98,9 @@ Image.prototype = utils.inherits(Base, {
 			this.width = data.size.height;
 			this.height = data.size.width;
 		    }
-		    return gmImg.rotate("black", angle).write(this.source, cb);
-		}
-	    }
+		  //  return ffmpeg.rotate("black", angle).write(this.source, cb);
+		}*/	    
 	    cb && cb(err);
-	}.bind(this));
     },
 
     makeThumbnail: function makeThumbnail(size, cb) {
@@ -124,7 +133,7 @@ Image.getSampleImageFiles = function getSampleImageFiles(cb) {
     fs.readdir(params.samplesDir, function(err, files) {
 	if (err)
 	    return cb(err);
-	var legitExtensions =  {'.jpg':1, '.gif':1, '.png':1 };
+	var legitExtensions =  {'.jpg':1, '.gif':1, '.png':1, 'mjpeg':1, 'theora':1 };
 	var fullFiles = [];
 	for (var f = 0; f < files.length; f++) {
 	    if (path.extname(files[f]) in legitExtensions)
@@ -133,15 +142,12 @@ Image.getSampleImageFiles = function getSampleImageFiles(cb) {
 	cb(null, fullFiles);
     });
 };
-
+// TODO: fix this
 Image._makeThumbnail = function _makeThumbnail(src, dst, width, height, cb) {
     var scale_x = width*0.1;
     var scale_y = height*0.1;
     var comm = 'ffmpeg -y -i '+ src + ' -ss 0 -vframes 1 -s ' + 150 + "x" + 150 + ' -an '+ dst;
     exec(comm, function(err, stdout, stderr) {
-        if (err){
-	        return callback.call(err, stdout, stderr, comm);
-        }
     });
 };
 
@@ -170,86 +176,4 @@ module.exports = Image;
 // ----------------------------------------------------------------------
 
 // gm identify ignores exif tags
-gm.prototype.identify = function(callback){
-    var self = this;
-    if (!callback)
-	return self;
-    if (self._identifying) {
-	self._iq.push(callback);
-	return self;
-    }
-    if (Object.keys(self.data).length)  {
-	callback.call(self, null, self.data);
-	return self;
-    }
-    self._iq = [callback];
-    self._identifying = true;
-    var cmd = "gm identify -ping -verbose " + self.source;
-    self._exec(cmd, function(err, stdout, stderr) {
-	if (err)
-	    return callback.call(self, err, stdout, stderr, cmd);
-	stdout = (stdout||"").trim().replace(/\r\n|\r/g, "\n");
-	var parts = stdout.split("\n")
-	, rgx = /^( *)([-a-zA-Z0-9 ]*): *(.*)/
-	, data = self.data
-	, cur
-	, handle = {
-	    'geometry': function(val) {
-		var split = val.split("x");
-		data.size = 
-		    { width : parseInt(split[0], 10),
-		      height: parseInt(split[1], 10) 
-		    };
-            },
-            'format': function(val) {
-		data.format = val.split(" ")[0].toLowerCase();
-            },
-            'depth': function(val) {
-		data.depth = parseInt(val, 10);
-            },
-            'colors': function(val) {
-		data.color = parseInt(val, 10);
-            },
-            'resolution': function(val) {
-		data.res = val;
-            },
-            'filesize': function(val) {
-		data.filesize = val;
-            },
-	    'profile-exif': function(cal) {
-		data.exif = {};
-		return data.exif;
-	    }
-        };
-	for (var i = 0, len = parts.length; i < len; ++i){
-	    var result = rgx.exec(parts[i]);
-	    if (result) {
-		var indent = result[1].length / 2;
-		var key = result[2].toLowerCase();
-		var val = result[3];
-		if (1 == indent){
-		    var handler = handle[key];
-		    if (handler) {
-			cur = handler(val);
-		    }
-		    else if (val) {
-			data[key] = val;
-			cur = null;
-		    }
-		    else {
-			cur = data[key] = {};
-		    }
-		}
-		else if (2 == indent) {
-		    if (cur)
-			cur[key] = val;
-		}
-	    }
-	}
-	var idx = self._iq.length;
-	while (idx--)
-	    self._iq[idx].call(self, null, self.data);
-	self._identifying = false;
-    });
-    return self;
-};
+
