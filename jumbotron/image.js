@@ -22,6 +22,7 @@ var ffmpeg = function(type, input, output){
     case 'thumb':
         prefix = 'ffmpeg -y -i';
         suffix = '-ss 0 -vframes 1 -s 150x150 -an';
+        output = output.slice(0,output.lastIndexOf('.'))+'.jpg';
         break;
     case 'ping':
         prefix = 'ffprobe -show_streams -show_files';
@@ -233,36 +234,10 @@ gm.prototype.identify = function(callback){
 		data.size = identify(self.source,'geo')
 		data.format = self.source.slice(self.source.lastIndexOf('.'));
 		data.filesize = identify(self.source,'filesize');
-/*	for (var i = 0, len = parts.length; i < len; ++i){
-	    var result = rgx.exec(parts[i]);
-	    if (result) {
-		var indent = result[1].length / 2;
-		var key = result[2].toLowerCase();
-		var val = result[3];
-		if (1 == indent){
-		    var handler = handle[key];
-		    if (handler) {
-			cur = handler(val);
-		    }
-		    else if (val) {
-			data[key] = val;
-			cur = null;
-		    }
-		    else {
-			cur = data[key] = {};
-		    }
-		}
-		else if (2 == indent) {
-		    if (cur)
-			cur[key] = val;
-		}
-	    }
-	}*/
 	var idx = self._iq.length;
 	while (idx--)
 	    self._iq[idx].call(self, null, self.data);
 	self._identifying = false;
-    //});
     return self;
 };
 
