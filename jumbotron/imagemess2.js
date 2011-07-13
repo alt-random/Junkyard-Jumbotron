@@ -166,7 +166,7 @@ Image.getSampleImageFiles = function getSampleImageFiles(cb) {
     fs.readdir(params.samplesDir, function(err, files) {
 	if (err)
 	    return cb(err);
-	var legitExtensions = {'jpg':1,'jpeg':1,'png':1,'gif':1,'mjpeg':1,'theora':1, 'video':1};
+	var legitExtensions = {'jpg':1,'jpeg':1,'png':1,'gif':1,'ogv':1,'theora':1, 'video':1};
 	var fullFiles = [];
 	for (var f = 0; f < files.length; f++) {
 	    if (path.extname(files[f]) in legitExtensions)
