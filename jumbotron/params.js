@@ -25,11 +25,13 @@ module.exports = {
 			 'mailer-daemon': 1 },
 
     // File size and type limits
-    allowedFileTypes: { jpg : 1,
-			jpeg: 1,
-			png : 1,
-			gif : 1,
-            ogv : 1 },
+    allowedFileTypes: {jpg:1,
+                       jpeg:1,
+                       png:1,
+                       gif:1,
+                       mjpeg:1,
+                       theora:1,
+                        video:1},
     maxFileSize: 2.5, // Individual file size limit, in megabytes
     //UNUSEDmaxTotalSize: 100, // Total limit per jumbotron
 
