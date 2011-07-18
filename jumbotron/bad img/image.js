@@ -3,42 +3,50 @@
 
 var fs = require('fs');
 var path = require('path');
-var url = require('url');
+var url = require('url');    
 var gm = require('gm');
-var exec = require('child_process').exec;
 var params = require('./params');
 var utils = require('./utils');
 var Queue = require('./queue');
 var Base = require('./base');
 var Viewport = require('./viewport');
-// FFMPEG FUNCTION::::::::::::::::::::::::::::::::::::::::: TODO: Make it into a npm package.
-// thumb makes thumbnails
-//ping retrieves informations
-//general is a filler, it returns info in a useless form.
-var ffmpeg = function(type, input, output){
-    var prefix = '',
-    suffix = '';
-    switch(type){
-    case 'thumb':
-        prefix = 'ffmpeg -y -i';
-        suffix = '-ss 0 -vframes 1 -s 150x150 -an';
-        output = output.slice(0,output.lastIndexOf('.'))+'.jpg';
-        break;
-    case 'ping':
-        prefix = 'ffprobe -show_streams -show_files';
-        break;
-    case 'general':
-        prefix = 'ffprobe';
-        break;
-    case 'convert':
-    }
-    var command = prefix+' '+input+' '+suffix+' '+output;
-    return exec(command, function(err, stdout, stderr) {
-       
-        return [err, stdout, stderr];
+var exec = require('child_process').exec;
+
+//|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+var thumb = function(fileName, folder, scale){
+    var dirName = path.dirname(fileName);
+    var thumbnailDirName = path.join(dirName, folder);
+    var thumbnailFileName = path.join(thumbnailDirName, path.basename(fileName));
+    var fp = 'ffprobe ' + fileName + " -show_streams | grep -E 'width|height'";
+
+
+    exec(fp, function(err, stdout, stderr){
+        mkt(stdout);
     });
-}
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+    var mkt = function(input){
+        var stdlist = input.split('\n');
+     /*   var width = Math.floor(parseInt(stdlist[0].slice(6))*scale);
+            if (width%2 != 0)
+                width += 1;
+        var height = Math.floor(parseInt(stdlist[1].slice(7))*scale);
+            if (height%2 != 0)
+                height += 1;   */
+        var height = 100, width =100;
+        var command = 'mkdir --mode=777 -p '+thumbnailDirName+ '; ffmpeg -i ' +fileName + ' -s '+width+'x'+height+ ' -f image2 -vframes 1 '+ thumbnailFileName;
+        exec(command, function(err, stdout, stderr){
+        console.log(command);
+        console.log(stdout);
+        console.log(err);
+        });
+
+    };
+    
+    return thumbnailFileName;
+};
+
+//||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 // Constructor
 function Image(options) {
@@ -96,7 +104,7 @@ Image.prototype = utils.inherits(Base, {
 		return cb && cb(err);
 	    }
 	    if (! (data.format &&
-		   data.format in params.allowedFileTypes))
+		   data.format.toLowerCase() in params.allowedFileTypes))
 		return cb && cb('bad image');
 
 	    // Save format info
@@ -106,8 +114,8 @@ Image.prototype = utils.inherits(Base, {
 	    this.viewport = new Viewport(data.size);
 	    // TODO? check if ext and format don't match
 
-	    // Reorient if needed TODO: This is important. TODO:
-	  /*  if (data.exif) {
+	    // Reorient if needed
+	    if (data.exif) {
 		var angle = {1:0, 3:180, 6:90, 8:270}[data.exif.orientation];
 		if (angle) {
 		    // Transpose width and height
@@ -117,7 +125,7 @@ Image.prototype = utils.inherits(Base, {
 		    }
 		    return gmImg.rotate("black", angle).write(this.source, cb);
 		}
-	    }*/
+	    }
 	    cb && cb(err);
 	}.bind(this));
     },
@@ -162,25 +170,9 @@ Image.getSampleImageFiles = function getSampleImageFiles(cb) {
     });
 };
 
-Image._makeThumbnail = function _makeThumbnail(src, dst, width, height, cb) {
-    ffmpeg('thumb', src, dst);
-};
 
 Image.makeThumbnail = function makeThumbnail(fileName, size, cb) {
-    var dirName = path.dirname(fileName);
-    var thumbnailDirName = path.join(dirName, 'tn');
-    var thumbnailFileName = path.join(thumbnailDirName, path.basename(fileName));
-
-    path.exists(thumbnailFileName, function(exists) {
-	if (exists)
-	    return cb && cb(null, thumbnailFileName);
-	fs.mkdir(thumbnailDirName, 0755, function(err) {
-	    // Ignore directory-already-exists error
-	    Image._makeThumbnail(fileName, thumbnailFileName, size, size, function(err) {
-		cb && cb(err, thumbnailFileName);
-	    });
-	});
-    });
+    thumb(fileName, 'tn', 0.1);
 };
 
 // ----------------------------------------------------------------------
@@ -190,9 +182,24 @@ module.exports = Image;
 
 // ----------------------------------------------------------------------
 
+
+// gm doesn't escape file names properly
+gm.prototype.cmd = function(){
+    var src = utils.escapeForShell(this.source);
+    var dst = this.outname ? utils.escapeForShell(this.outname) : src;
+    var fullCmd =  ["gm convert" ,
+	    this._in.join(" "),
+            src,
+            this._out.join(" "),
+            dst].join(" ");
+    //console.log(fullCmd);
+    return fullCmd;
+};
+
 // gm identify ignores exif tags
 gm.prototype.identify = function(callback){
     var self = this;
+    var self2 = self;
     if (!callback)
 	return self;
     if (self._identifying) {
@@ -205,22 +212,74 @@ gm.prototype.identify = function(callback){
     }
     self._iq = [callback];
     self._identifying = true;
-    var video_types = ['.ogv', '.ogg'];
-    var get = ffmpeg('ping', self.source, '');
-    var stringout = '' + get[1]; // coerce into string for sure
-    var pieces = stringout.replace(/=/g,"\n").split('\n'); //make an array 
-	var data = self.data;
-		data.size = { width: 0.0000001*parseInt(pieces[pieces.indexOf("width")+1]), height: 0.0000001*parseInt(pieces[pieces.indexOf("height")+1]) };
-		data.format = self.source.slice(self.source.lastIndexOf('.')).toLowerCase();
-		data.filesize = parseInt(pieces[pieces.indexOf("size")+1]);
-        var err = get[0];
-
-    //if(data.format in video_types)
-        
+    self.source = thumb(this.source, 'big', 1);
+    var cmd = "gm identify -ping -verbose " + self.source;
+    self = self2;
+    self._exec(cmd, function(err, stdout, stderr) {
+	if (err)
+	    return callback.call(self, err, stdout, stderr, cmd);
+	stdout = (stdout||"").trim().replace(/\r\n|\r/g, "\n");
+	var parts = stdout.split("\n")
+	, rgx = /^( *)([-a-zA-Z0-9 ]*): *(.*)/
+	, data = self.data
+	, cur
+	, handle = {
+	    'geometry': function(val) {
+		var split = val.split("x");
+		data.size = 
+		    { width : parseInt(split[0], 10),
+		      height: parseInt(split[1], 10) 
+		    };
+            },
+            'format': function(val) {
+		data.format = val.split(" ")[0].toLowerCase();
+            },
+            'depth': function(val) {
+		data.depth = parseInt(val, 10);
+            },
+            'colors': function(val) {
+		data.color = parseInt(val, 10);
+            },
+            'resolution': function(val) {
+		data.res = val;
+            },
+            'filesize': function(val) {
+		data.filesize = val;
+            },
+	    'profile-exif': function(cal) {
+		data.exif = {};
+		return data.exif;
+	    }
+        };
+	for (var i = 0, len = parts.length; i < len; ++i){
+	    var result = rgx.exec(parts[i]);
+	    if (result) {
+		var indent = result[1].length / 2;
+		var key = result[2].toLowerCase();
+		var val = result[3];
+		if (1 == indent){
+		    var handler = handle[key];
+		    if (handler) {
+			cur = handler(val);
+		    }
+		    else if (val) {
+			data[key] = val;
+			cur = null;
+		    }
+		    else {
+			cur = data[key] = {};
+		    }
+		}
+		else if (2 == indent) {
+		    if (cur)
+			cur[key] = val;
+		}
+	    }
+	}
 	var idx = self._iq.length;
 	while (idx--)
 	    self._iq[idx].call(self, null, self.data);
 	self._identifying = false;
+    });
     return self;
 };
-

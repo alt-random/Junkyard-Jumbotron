@@ -25,8 +25,8 @@ var messages = {
 			   "We limit uploads to " + params.maxFileSize + "Mb."),
 
     'bad image'		: ("Can't handle file uploaded to '{0}'\n" +
-			   "Currently we only support images (no movies) " +
-			   "in jpeg, png and gif formats."),
+			   "Currently we only support images and movies (no text files) " +
+			   "in jpeg, png, ogv, and gif formats."),
 
     'no jumbotron'      : ("No Junkyard Jumbotron called '{0}'\n" +
                            "Whoops, there is no jumbotron named '{0}'"),
