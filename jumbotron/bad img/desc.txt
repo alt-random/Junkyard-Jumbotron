@@ -1,3 +1,0 @@
-This contains various attempts to get stuff to work.
-
-The one named image.js is very promising, but is plauged by some weird bugs. Back burner for now.
