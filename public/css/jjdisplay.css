@@ -21,7 +21,8 @@ body {
 #img {
     background-repeat: no-repeat;
 }
-
+#it{
+}
 #label {
     display: none;
     color: red;

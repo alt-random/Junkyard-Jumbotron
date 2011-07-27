@@ -167,9 +167,24 @@ $.extend(Display.prototype, {
 
 	var bgPosStr  = marginX  + 'px ' + marginY   + 'px';
 	var bgSizeStr = imgWidth + 'px ' + imgHeight + 'px';
-	this.imgElem.css({ width  : docWidth  + 'px',
+    var srcType = img.src.slice(img.src.lastIndexOf('.'));
+    var imageFormats = {'.jpg':1,'.png':1,'.gif':1};
+    var videoFormats = {'.ogv':1,'.mov':1,'.vp8':1};
+    var htmlString = '';
+    if (srcType in imageFormats)
+        htmlString = '<img id="it" src="'+img.src+'"> </img>';
+    else if (srcType in videoFormats)
+        htmlString = '<video id="it" src="'+img.src+'" controls width="'+imgWidth+'" height="'+imgHeight+'"> </video>';
+        
+    $('div#crop').html(htmlString);
+    $('#it').css({ 
+			   'position'	: 'absolute',
+			   'left' : marginX,
+                'top' : marginY
+			 });
+	/*this.imgElem.css({ width  : docWidth  + 'px',
 			   height : docHeight + 'px',
-			   'background-image'		: 'url(' + img.src + ')',
+			   'background-image'		: video,
 			   'background-position'	: bgPosStr,
 			   'background-size'		: bgSizeStr,
 			   '-webkit-background-size'	: bgSizeStr,
