@@ -123,7 +123,7 @@ Image.getSampleImageFiles = function getSampleImageFiles(cb) {
     fs.readdir(params.samplesDir, function(err, files) {
 	if (err)
 	    return cb(err);
-	var legitExtensions =  {'.jpg':1, '.gif':1, '.png':1 };
+	var legitExtensions =  {'.jpg':1, '.gif':1, '.png':1, '.ogv':1, '.mpeg':1 };
 	var fullFiles = [];
 	for (var f = 0; f < files.length; f++) {
 	    if (path.extname(files[f]) in legitExtensions)
@@ -196,8 +196,7 @@ gm.prototype.identify = function(callback){
     }
     self._iq = [callback];
     self._identifying = true;
-    var cmd = "ffmpeg -i "+self.source+" -f mjpeg -ss 0 -vframes 1 -an - | gm identify -ping -verbose -";
-    
+    var cmd = "ffmpeg -i "+self.source+" -f mjpeg -ss 0 -vframes 1 -an - 2>/dev/null | gm identify -ping -verbose -";
     self._exec(cmd, function(err, stdout, stderr) {
 	if (err)
 	    return callback.call(self, err, stdout, stderr, cmd);
@@ -215,7 +214,7 @@ gm.prototype.identify = function(callback){
 		    };
             },
             'format': function(val) {
-		data.format = val.split(" ")[0].toLowerCase();
+		data.format = path.extname(self.source);
             },
             'depth': function(val) {
 		data.depth = parseInt(val, 10);

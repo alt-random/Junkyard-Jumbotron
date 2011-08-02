@@ -19,9 +19,12 @@ body {
     -moz-transform-origin: 0% 0%;
 }
 #img {
-    background-repeat: no-repeat;
 }
 #it{
+position: absolute;
+left: 0px;
+top: 0px;
+z-index:1000;
 }
 #label {
     display: none;

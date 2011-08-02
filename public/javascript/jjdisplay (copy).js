@@ -1,17 +1,6 @@
 // ======================================================================
 // Viewport class
-function videotr(){
-var media = document.createElement('video');
-media.id = 'it';
-media.controls = 'controls';
-media.loop = 'loop';
-media.autoplay = true;
-media.preload = true;
 
-document.getElementById('crop').appendChild(media);
-console.log(media);
-return media;
-}
 function Viewport(options) {
     options = options || {};
 
@@ -70,12 +59,12 @@ function Display() {
 
     this.mode = 'idle';	// idle|dragging|scaling|loading
 
-    this.image = new videotr();
+    this.image = new Image();
     this.image.onload  = bind(this, this.onImageLoad);
     this.image.onerror = bind(this, this.onImageError);
     this.viewport = new Viewport();
     this.frozen = false; // Can we pan and zoom?
-    
+
     this.firstMouseX = 0;
     this.firstMouseY = 0;
     this.lastTranslateX = 0;
@@ -123,7 +112,6 @@ $.extend(Display.prototype, {
     // Transforms
 
     transformImg: function transformImg() {
-    
 	var img = this.image;
 	if (! img.src || ! img.width || ! img.height)
 	    return;
@@ -179,25 +167,9 @@ $.extend(Display.prototype, {
 
 	var bgPosStr  = marginX  + 'px ' + marginY   + 'px';
 	var bgSizeStr = imgWidth + 'px ' + imgHeight + 'px';
-    var srcType = img.src.slice(img.src.lastIndexOf('.'));
-    var imageFormats = {'.jpg':1,'.png':1,'.gif':1};
-    var videoFormats = {'.ogv':1,'.mov':1,'.mpeg':1};
-    var htmlString = img.outerHTML;
-    //if (srcType in imageFormats)
-    //    htmlString = '<img id="it" src="'+img.src+'" height="'+imgHeight+'" width="'+imgWidth+'"> </img>';
-    //else if (srcType in videoFormats)
-    //    htmlString = '<video id="it" src="'+img.src+'" controls height="'+imgHeight+'" width="'+imgWidth+'"> </video>';
-
-
- //   $('div#crop').html(htmlString);
-    $('#it').css({ 
-			   'position'	: 'absolute',
-			   'left' : marginX,
-                'top' : marginY
-			 });
-	/*this.imgElem.css({ width  : docWidth  + 'px',
+	this.imgElem.css({ width  : docWidth  + 'px',
 			   height : docHeight + 'px',
-			   'background-image'		: video,
+			   'background-image'		: 'url(' + img.src + ')',
 			   'background-position'	: bgPosStr,
 			   'background-size'		: bgSizeStr,
 			   '-webkit-background-size'	: bgSizeStr,
@@ -490,21 +462,18 @@ $.extend(Display.prototype, {
 
 	load: function load(args) {
 	    var image = this.image;
-
 	    if (this.image.src != args.src) {
 		this.mode = 'loading';
 		this.frozen = args.frozen;
 		this.viewport = new Viewport(args.vp);
 		this.image.src = args.src;
-        }
-	//	if (this.image.complete || this.image.readyState === 4)
-	//	    this.onImageLoad();
-	 //   }
-	 //   else {
+		if (this.image.complete || this.image.readyState === 4)
+		    this.onImageLoad();
+	    }
+	    else {
 		// Pass to viewport message handler
-	//	this.msgHandlers.viewport.call(this, args.viewport);
-	 //   }
-
+		this.msgHandlers.viewport.call(this, args.viewport);
+	    }
 	},
 
 	vp: function vp(args) {

@@ -27,6 +27,8 @@ module.exports = {
     // File size and type limits
     allowedFileTypes: {'.jpg':1,
                        jpeg:1,
+                       mpeg:1,
+                       '.mpeg':1,
                        png:1,
                        jpg:1,
                        gif:1,

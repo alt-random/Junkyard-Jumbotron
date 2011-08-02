@@ -29,7 +29,7 @@ node-packages:
 	$(NPM) install underscore@1.1.4
 	$(NPM) install mailparser@0.1.0
 	$(NPM) install email@0.2.2
-
+	$(NPM) install mime@1.2.2
 
 # Make python extension
 python-extension:

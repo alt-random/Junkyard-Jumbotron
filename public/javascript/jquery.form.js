@@ -247,7 +247,7 @@ $.fn.ajaxSubmit = function(options) {
 			if (n && !sub.disabled) {
 				s.extraData = s.extraData || {};
 				s.extraData[n] = sub.value;
-				if (sub.type == "image") {
+				if (sub.type == "image" || sub.type == 'video') {
 					s.extraData[n+'.x'] = form.clk_x;
 					s.extraData[n+'.y'] = form.clk_y;
 				}
@@ -471,7 +471,7 @@ $.fn.ajaxForm = function(options) {
 	}).bind('click.form-plugin', function(e) {
 		var target = e.target;
 		var $el = $(target);
-		if (!($el.is(":submit,input:image"))) {
+		if (!($el.is(":submit,input:image") || $el.is(":submit,input:video") )) {
 			// is this a child element of the submit el?  (ex: a span within a button)
 			var t = $el.closest(':submit');
 			if (t.length == 0) {
@@ -481,7 +481,7 @@ $.fn.ajaxForm = function(options) {
 		}
 		var form = this;
 		form.clk = target;
-		if (target.type == 'image') {
+		if (target.type == 'image' || target.type == 'video') {
 			if (e.offsetX != undefined) {
 				form.clk_x = e.offsetX;
 				form.clk_y = e.offsetY;
@@ -535,7 +535,7 @@ $.fn.formToArray = function(semantic) {
 			continue;
 		}
 
-		if (semantic && form.clk && el.type == "image") {
+		if (semantic && form.clk && (el.type == "image" || el.type == 'video')) {
 			// handle image inputs on the fly when semantic == true
 			if(!el.disabled && form.clk == el) {
 				a.push({name: n, value: $(el).val()});
@@ -559,7 +559,7 @@ $.fn.formToArray = function(semantic) {
 		// input type=='image' are not found in elements array! handle it here
 		var $input = $(form.clk), input = $input[0];
 		n = input.name;
-		if (n && !input.disabled && input.type == 'image') {
+		if (n && !input.disabled && (input.type == 'image' || input.type == 'video')) {
 			a.push({name: n, value: $input.val()});
 			a.push({name: n+'.x', value: form.clk_x}, {name: n+'.y', value: form.clk_y});
 		}
@@ -662,7 +662,7 @@ $.fieldValue = function(el, successful) {
 
 	if (successful && (!n || el.disabled || t == 'reset' || t == 'button' ||
 		(t == 'checkbox' || t == 'radio') && !el.checked ||
-		(t == 'submit' || t == 'image') && el.form && el.form.clk != el ||
+		(t == 'submit' || t == 'image' || t == 'video') && el.form && el.form.clk != el ||
 		tag == 'select' && el.selectedIndex == -1)) {
 			return null;
 	}

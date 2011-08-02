@@ -14,7 +14,8 @@ var fs = require('fs'),
     utils = require('connect').utils,
     Buffer = require('buffer').Buffer,
     parseUrl = require('url').parse,
-    queryString = require('querystring');
+    queryString = require('querystring'),
+    mime = require('mime');
 
 /**
  * Default browser cache maxAge of one year.
@@ -105,7 +106,7 @@ module.exports = function staticProvider(options){
 
                 // Response headers
                 var headers = {
-                    "Content-Type": utils.mime.type(filename),
+                    "Content-Type": mime.lookup(filename),
                     "Content-Length": stat.size,
                     "Last-Modified": stat.mtime.toUTCString(),
                     "Cache-Control": "public max-age=" + (maxAge / 1000),
