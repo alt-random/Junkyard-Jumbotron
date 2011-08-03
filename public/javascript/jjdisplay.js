@@ -1,16 +1,23 @@
 // ======================================================================
 // Viewport class
+var media;
 function videotr(){
-var media = document.createElement('video');
-media.id = 'it';
-media.controls = 'controls';
-media.loop = 'loop';
-media.autoplay = true;
+media = document.createElement('video');
 media.preload = true;
+media.controls = true;
+var list = {'.jpg':1, '.png':1, '.gif':1};
+if(media.src.slice(media.src.lastIndexOf('.')) in list){
+$('#crop').html('<img src="'+media.src+'"></img>');
+}
+media.className = 'c1';
+media.id = 'it';
 
-document.getElementById('crop').appendChild(media);
-console.log(media);
-return media;
+
+//media.loop = true;
+//media.autoplay = true;
+
+var rex = document.getElementById('crop').appendChild(media);
+return rex;
 }
 function Viewport(options) {
     options = options || {};
@@ -65,7 +72,7 @@ function Display() {
     Client.call(this);
 
     // Cache for speed
-    this.imgElem = $('#img');
+    this.imgElem = $('#it');
     this.cropElem = $('#crop');
 
     this.mode = 'idle';	// idle|dragging|scaling|loading
@@ -93,7 +100,6 @@ function Display() {
 }
 
 Display.prototype = new Client();
-
 $.extend(Display.prototype, {
 
     initDom: function initDom() {
@@ -123,11 +129,12 @@ $.extend(Display.prototype, {
     // Transforms
 
     transformImg: function transformImg() {
-    
-	var img = this.image;
-	if (! img.src || ! img.width || ! img.height)
-	    return;
-
+	var img = media;//this.image;
+    img.height = 600;
+    img.width = 600;
+	if (!img.src || !img.width || !img.height){
+    return;	   
+    }
 	// Cache for speed
 	var round = Math.round;
 	var vp = this.viewport;
@@ -161,12 +168,12 @@ $.extend(Display.prototype, {
 			    'rotate(90deg) translate(0%, -100%)',
 			    'rotate(180deg) translate(-100%, -100%)',
 			    'rotate(270deg) translate(-100%, 0%)'][vp.rotation];
-	this.cropElem.css({width : docWidth + 'px',
-			   height: docHeight + 'px',
-			   '-webkit-transform'	: transformStr,
-			   '-moz-transform'	: transformStr,
-			   '-o-transform'	: transformStr
-			  });
+	//this.cropElem.css({width : docWidth + 'px',
+			//   height: docHeight + 'px',
+			//   '-webkit-transform'	: transformStr,
+			 //  '-moz-transform'	: transformStr,
+			  // '-o-transform'	: transformStr
+			 // });
 	// IE: filter: "progid:DXImageTransform.Microsoft.Matrix
 	//	(M11=1, M12=-1, M21=1, M22=1, DX=?, DY=?)"
 
@@ -179,22 +186,23 @@ $.extend(Display.prototype, {
 
 	var bgPosStr  = marginX  + 'px ' + marginY   + 'px';
 	var bgSizeStr = imgWidth + 'px ' + imgHeight + 'px';
-    var srcType = img.src.slice(img.src.lastIndexOf('.'));
-    var imageFormats = {'.jpg':1,'.png':1,'.gif':1};
-    var videoFormats = {'.ogv':1,'.mov':1,'.mpeg':1};
-    var htmlString = img.outerHTML;
     //if (srcType in imageFormats)
     //    htmlString = '<img id="it" src="'+img.src+'" height="'+imgHeight+'" width="'+imgWidth+'"> </img>';
     //else if (srcType in videoFormats)
     //    htmlString = '<video id="it" src="'+img.src+'" controls height="'+imgHeight+'" width="'+imgWidth+'"> </video>';
 
 
- //   $('div#crop').html(htmlString);
     $('#it').css({ 
-			   'position'	: 'absolute',
-			   'left' : marginX,
-                'top' : marginY
+	   'position'	: 'absolute',
+	   'left' : marginX +'px',
+        'top' : marginY+'px',
+        'transform' : 'scaleX(scaleX) scaleY(scaleY) ' + transformStr,
+        '-moz-transform' : 'scaleX(scaleX) scaleY(scaleY) ' + transformStr,
+        '-webkit-transform' : 'scaleX(scaleX) scaleY(scaleY) ' + transformStr,
+        '-o-transform' : 'scaleX(scaleX) scaleY(scaleY) ' + transformStr,
+        '-ms-transform' : 'scaleX(scaleX) scaleY(scaleY) ' + transformStr
 			 });
+
 	/*this.imgElem.css({ width  : docWidth  + 'px',
 			   height : docHeight + 'px',
 			   'background-image'		: video,
@@ -221,6 +229,7 @@ $.extend(Display.prototype, {
     },
     
     translateViewport: function translateViewport(x, y) {
+
 	// For consistency with how scaling is done, store last values,
 	// invert, and retranslate.
 	var vp = this.viewport;
@@ -259,6 +268,7 @@ $.extend(Display.prototype, {
     // the first point should reset the scale). We store how much we scaled last
     // time, invert it, and scale what we want.
     scaleViewport: function scaleViewport(x, y, ox, oy) {
+
 	var vp = this.viewport;
 
 	// Convert origin from window pixels to viewport pixels
@@ -304,8 +314,8 @@ $.extend(Display.prototype, {
 
     handleResize: function handleResize() {
 	// Update css, update image transform, and notify the server
-	$('#finalcrop').css({width : $(window).width() + 'px',
-			     height: $(window).height() + 'px'}); 
+	//$('#finalcrop').css({'width' : '100%',//$(window).width() + 'px',
+			//     'height': '100%'});//$(window).height() + 'px'}); 
 	this.transformImg();
 	this.sendSizeMsg();
     },
@@ -489,14 +499,16 @@ $.extend(Display.prototype, {
     msgHandlers : {
 
 	load: function load(args) {
-	    var image = this.image;
 
+	    var image = this.image;
 	    if (this.image.src != args.src) {
 		this.mode = 'loading';
 		this.frozen = args.frozen;
 		this.viewport = new Viewport(args.vp);
 		this.image.src = args.src;
+
         }
+
 	//	if (this.image.complete || this.image.readyState === 4)
 	//	    this.onImageLoad();
 	 //   }
@@ -528,6 +540,7 @@ $.extend(Display.prototype, {
 	}
 
     }
+    
 });
 
 // ----------------------------------------------------------------------

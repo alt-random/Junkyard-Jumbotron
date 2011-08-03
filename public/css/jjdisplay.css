@@ -12,19 +12,22 @@ body {
 }
 
 #finalcrop {
-    overflow: hidden;
+position:absolute;
+overflow:hidden;
+width:100%;
+height:100%;
+left:0px;
+top:0px;
 }
 #crop {
     -webkit-transform-origin: 0% 0%;
     -moz-transform-origin: 0% 0%;
 }
 #img {
+
 }
 #it{
-position: absolute;
-left: 0px;
-top: 0px;
-z-index:1000;
+
 }
 #label {
     display: none;
