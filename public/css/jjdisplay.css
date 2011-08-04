@@ -26,8 +26,19 @@ top:0px;
 #img {
 
 }
+#ppi{
+  height: 1in;
+  left: -100%;
+  position: absolute;
+  top: -100%;
+  width: 1in;
+}
 #it{
-
+position: static;
+display: block;
+margin-left: auto;
+margin-right: auto;
+height:100%;
 }
 #label {
     display: none;

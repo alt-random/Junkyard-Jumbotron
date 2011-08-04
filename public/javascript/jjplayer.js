@@ -1,6 +1,6 @@
 
 function whenplay(){
-//    var xpvi = setTimeout("document.body.getElementById('it');", 3000);
+
     var time = new Date();
     if(time.getSeconds() < 30)
     {

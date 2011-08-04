@@ -10,6 +10,7 @@ var utils = require('./utils');
 var Queue = require('./queue');
 var Base = require('./base');
 var Viewport = require('./viewport');
+var execfunc = require('child_process').exec;
 
 // Constructor
 function Image(options) {
@@ -134,13 +135,13 @@ Image.getSampleImageFiles = function getSampleImageFiles(cb) {
 };
 
 Image._makeThumbnail = function _makeThumbnail(src, dst, width, height, cb) {
-    gm(src).arg(null, ['-gravity', 'center'])
-         // gm 1.3.5 doesn't support ^ postfix for resize
-	 //.resize(width, height + '^')
-         .resize(width, height)
-	 .crop(width, height, 0, 0)
-	.noProfile()
-	.write(dst, cb);
+    var loc = dst.slice(0, dst.lastIndexOf('.'))+'.jpg';
+    var comm = "ffmpeg -i "+src+" -f mjpeg -ss 0 -s "+width+"x"+height+" -vframes 1 -an "+loc;
+    execfunc(comm, function(err, stdout, stderr){
+    if(err)    
+        console.log(err);
+    });
+    
 };
 
 Image.makeThumbnail = function makeThumbnail(fileName, size, cb) {

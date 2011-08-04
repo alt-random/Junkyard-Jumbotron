@@ -4,16 +4,12 @@ var media;
 function videotr(){
 media = document.createElement('video');
 media.preload = true;
-media.controls = true;
-var list = {'.jpg':1, '.png':1, '.gif':1};
-if(media.src.slice(media.src.lastIndexOf('.')) in list){
-$('#crop').html('<img src="'+media.src+'"></img>');
-}
+//media.controls = true;
 media.className = 'c1';
 media.id = 'it';
 
 
-//media.loop = true;
+media.loop = true;
 //media.autoplay = true;
 
 var rex = document.getElementById('crop').appendChild(media);
@@ -129,9 +125,16 @@ $.extend(Display.prototype, {
     // Transforms
 
     transformImg: function transformImg() {
-	var img = media;//this.image;
-    img.height = 600;
-    img.width = 600;
+	var img = this.image;
+
+//scales height on ppi of client.
+
+    if(this.image.videoHeight){
+    var ppi = parseInt(document.getElementById("ppi").offsetHeight);
+    console.log(ppi);
+   img.height = this.image.videoHeight
+   img.width = this.image.videoWidth
+    }
 	if (!img.src || !img.width || !img.height){
     return;	   
     }
@@ -155,8 +158,8 @@ $.extend(Display.prototype, {
 	var scaleY = docHeight / vp.height;
 
 	// Final image size
-	var imgWidth  = round(img.width  * scaleX);
-	var imgHeight = round(img.height * scaleY);
+//	var imgWidth  = round(img.width  * scaleX);
+	//var imgHeight = round(img.height * scaleY);
 
 	// Margins to push the image into place
 	var marginX = round(-vp.x * scaleX);
@@ -168,12 +171,13 @@ $.extend(Display.prototype, {
 			    'rotate(90deg) translate(0%, -100%)',
 			    'rotate(180deg) translate(-100%, -100%)',
 			    'rotate(270deg) translate(-100%, 0%)'][vp.rotation];
-	//this.cropElem.css({width : docWidth + 'px',
-			//   height: docHeight + 'px',
-			//   '-webkit-transform'	: transformStr,
-			 //  '-moz-transform'	: transformStr,
-			  // '-o-transform'	: transformStr
-			 // });
+	this.cropElem.css({width : docWidth + 'px',
+			   height: docHeight + 'px',
+               'transform' : transformStr,
+			   '-webkit-transform'	: transformStr,
+			   '-moz-transform'	: transformStr,
+			   '-o-transform'	: transformStr
+			  });
 	// IE: filter: "progid:DXImageTransform.Microsoft.Matrix
 	//	(M11=1, M12=-1, M21=1, M22=1, DX=?, DY=?)"
 
@@ -185,22 +189,16 @@ $.extend(Display.prototype, {
 	// when a new image arrives and swap it in for the old one.
 
 	var bgPosStr  = marginX  + 'px ' + marginY   + 'px';
-	var bgSizeStr = imgWidth + 'px ' + imgHeight + 'px';
-    //if (srcType in imageFormats)
-    //    htmlString = '<img id="it" src="'+img.src+'" height="'+imgHeight+'" width="'+imgWidth+'"> </img>';
-    //else if (srcType in videoFormats)
-    //    htmlString = '<video id="it" src="'+img.src+'" controls height="'+imgHeight+'" width="'+imgWidth+'"> </video>';
-
+	//var bgSizeStr = imgWidth + 'px ' + imgHeight + 'px';
 
     $('#it').css({ 
 	   'position'	: 'absolute',
-	   'left' : marginX +'px',
-        'top' : marginY+'px',
-        'transform' : 'scaleX(scaleX) scaleY(scaleY) ' + transformStr,
-        '-moz-transform' : 'scaleX(scaleX) scaleY(scaleY) ' + transformStr,
-        '-webkit-transform' : 'scaleX(scaleX) scaleY(scaleY) ' + transformStr,
-        '-o-transform' : 'scaleX(scaleX) scaleY(scaleY) ' + transformStr,
-        '-ms-transform' : 'scaleX(scaleX) scaleY(scaleY) ' + transformStr
+	   'margin-left' : marginX +'px',
+        'margin-top' : marginY+'px',
+        'transform' : 'scale('+scaleX+', '+scaleY+')',
+	   '-webkit-transform'	: 'scale('+scaleX+', '+scaleY+')',
+	   '-moz-transform'	: 'scale('+scaleX+', '+scaleY+')',
+	   '-o-transform'	: 'scale('+scaleX+', '+scaleY+')',
 			 });
 
 	/*this.imgElem.css({ width  : docWidth  + 'px',
@@ -505,10 +503,20 @@ $.extend(Display.prototype, {
 		this.mode = 'loading';
 		this.frozen = args.frozen;
 		this.viewport = new Viewport(args.vp);
-		this.image.src = args.src;
-
+        var oktypes = {'.jpg':1, '.gif':1, '.png':1};
+        var type = args.src.slice(args.src.lastIndexOf('.'));
+        if (type in oktypes){
+ //           $(this.image).css({'display':'none'});
+ //           this.image = new Image();
+            this.image.poster = args.src;
+  //          this.image.className = 'c1';
+ //           this.image.id = 'it';
+//            document.getElementById('crop').appendChild(this.image);
         }
-
+        else
+	    	this.image.src = args.src;
+        }
+        this.onImageLoad();
 	//	if (this.image.complete || this.image.readyState === 4)
 	//	    this.onImageLoad();
 	 //   }
