@@ -1,19 +1,22 @@
 // ======================================================================
 // Viewport class
+/*$(document).ready(function(){
+//document.getElementById('crop').appendChild(media);
+//});*/
 var media;
 function videotr(){
 media = document.createElement('video');
 media.preload = true;
 //media.controls = true;
 media.className = 'c1';
-media.id = 'it';
-
-
-media.loop = true;
+media.id = 'it'; 
+document.getElementById('crop').appendChild(media);
+//media.loop = true;
 //media.autoplay = true;
 
-var rex = document.getElementById('crop').appendChild(media);
-return rex;
+
+return media;
+
 }
 function Viewport(options) {
     options = options || {};
@@ -129,13 +132,11 @@ $.extend(Display.prototype, {
 
 //scales height on ppi of client.
 
-    if(this.image.videoHeight){
-    var ppi = parseInt(document.getElementById("ppi").offsetHeight);
-    console.log(ppi);
-   img.height = this.image.videoHeight
-   img.width = this.image.videoWidth
-    }
-	if (!img.src || !img.width || !img.height){
+  //  if(this.image.videoHeight){
+  // img.height = this.image.videoHeight;
+  // img.width = this.image.videoWidth;
+    //}
+	if (!document.getElementById('placeholder')){// || !img.width || !img.height){
     return;	   
     }
 	// Cache for speed
@@ -490,40 +491,73 @@ $.extend(Display.prototype, {
     },
 
     onImageError: function onImageError() {
+
 	this.error("Can't load image", this.image.src);
 	this.mode = 'idle';
+
     },
 
     msgHandlers : {
 
 	load: function load(args) {
-
 	    var image = this.image;
 	    if (this.image.src != args.src) {
-		this.mode = 'loading';
-		this.frozen = args.frozen;
-		this.viewport = new Viewport(args.vp);
-        var oktypes = {'.jpg':1, '.gif':1, '.png':1};
-        var type = args.src.slice(args.src.lastIndexOf('.'));
-        if (type in oktypes){
- //           $(this.image).css({'display':'none'});
- //           this.image = new Image();
-            this.image.poster = args.src;
-  //          this.image.className = 'c1';
- //           this.image.id = 'it';
-//            document.getElementById('crop').appendChild(this.image);
-        }
-        else
-	    	this.image.src = args.src;
+		    this.mode = 'loading';
+		    this.frozen = args.frozen;
+		    this.viewport = new Viewport(args.vp);
+            var oktypes = {'.jpg':1, '.gif':1, '.png':1};
+            var type = args.src.slice(args.src.lastIndexOf('.'));
+            if (type in oktypes){
+                this.image = new Image();
+                this.image.id = 'it';
+                this.image.className = 'c1';
+                this.image.src = args.src;  
+                this.image.height = args.vp.height;
+                this.image.width = args.vp.width;
+                var div = document.getElementById('crop');
+                $(div).empty();
+                div.appendChild(this.image);
+                var trickery = document.createElement('div');
+                trickery.id = 'placeholder';
+                div.appendChild(trickery);//checks that src exists
+            }
+         /*   else if (fake.canPlayType(lib[ext])){
+                console.log(navigator.userAgent);//fake.canPlayType(lib[ext]));
+                var div = document.getElementById('crop');
+                $(div).empty();
+                this.image = new videotr();
+        	    this.image.src = args.src;
+            }*/
+            else{  
+                var blankPath = args.src.slice(0, args.src.lastIndexOf('.'));
+                var div = document.getElementById('crop');
+                $(div).empty();
+                this.image = new videotr();
+                    this.image.height = args.vp.height;
+                    this.image.width = args.vp.width;
+                    this.image.controls = true;
+                    var s = document.createElement('source');
+                    s.src = blankPath+'.ogv';
+                    s.type = 'video/ogg; codecs="theora, vorbis"';
+                    var s2 = document.createElement('source');
+                    s2.src = blankPath+'.mp4';
+                    s2.id = 'placeholder';
+                    s2.type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"';
+                    console.log(blankPath);
+                    this.image.appendChild(s2);
+                    this.image.appendChild(s);                    
+            }
+            
         }
         this.onImageLoad();
-	//	if (this.image.complete || this.image.readyState === 4)
+        this.mode = 'idle';
+	//	if (this.image.complete || this.image.readyState === 4){
 	//	    this.onImageLoad();
-	 //   }
-	 //   else {
-		// Pass to viewport message handler
-	//	this.msgHandlers.viewport.call(this, args.viewport);
-	 //   }
+	//    }
+	 //   else{
+	//	// Pass to viewport message handler
+	//	    this.msgHandlers.viewport.call(this, args.viewport);
+	//    }
 
 	},
 

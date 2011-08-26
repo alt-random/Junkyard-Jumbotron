@@ -1,6 +1,5 @@
 // ======================================================================
 // Image
-
 var fs = require('fs');
 var path = require('path');
 var url = require('url');
@@ -11,6 +10,29 @@ var Queue = require('./queue');
 var Base = require('./base');
 var Viewport = require('./viewport');
 var execfunc = require('child_process').exec;
+
+
+
+            function compatibility(fullsrc){
+                var src = fullsrc.slice(fullsrc.lastIndexOf('public/'));
+                var ext = src.slice(src.lastIndexOf('.'));
+                var dst = src.slice(0, src.lastIndexOf('.'));
+                switch(ext){
+                case '.mp4':
+                execfunc('ffmpeg2theora --videobitrate 200 --max_size 320x240 --output '+dst+'.ogv '+src, function(err, stdout, stderr){
+                console.log(stdout);
+                console.log(err);
+                });
+                break;
+                case '.ogv':
+                execfunc('HandBrakeCLI --preset "iPhone & iPod Touch" --vb 200 --two-pass --turbo --width 320 --turbo --optimize -input '+src+' --output '+dst+".mp4", function(err, stdout, stderr){
+                console.log(stdout);
+                console.log(err);
+                });
+                break;
+                }
+            }
+
 
 // Constructor
 function Image(options) {
@@ -124,7 +146,7 @@ Image.getSampleImageFiles = function getSampleImageFiles(cb) {
     fs.readdir(params.samplesDir, function(err, files) {
 	if (err)
 	    return cb(err);
-	var legitExtensions =  {'.jpg':1, '.gif':1, '.png':1, '.ogv':1, '.mpeg':1 };
+	var legitExtensions =  {'.jpg':1, '.gif':1, '.png':1, '.ogv':1, '.mp4':1, '.mpeg':1 };
 	var fullFiles = [];
 	for (var f = 0; f < files.length; f++) {
 	    if (path.extname(files[f]) in legitExtensions)
@@ -141,6 +163,8 @@ Image._makeThumbnail = function _makeThumbnail(src, dst, width, height, cb) {
     if(err)    
         console.log(err);
     });
+
+                compatibility(src);
     
 };
 
