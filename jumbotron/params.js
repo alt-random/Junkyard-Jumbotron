@@ -22,7 +22,8 @@ module.exports = {
 			 admin	: 1, 
 			 jumbotron : 1,
 			 'undefined' : 1,
-			 'mailer-daemon': 1 },
+			 'mailer-daemon': 1,
+              markers : 1},
 
     // File size and type limits
     allowedFileTypes: {'.jpg':1,
@@ -38,7 +39,7 @@ module.exports = {
                         '.mp4':1,
                        '.ogv':1,
                         ogv:1},
-    maxFileSize: 2.5, // Individual file size limit, in megabytes
+    maxFileSize: 11, // Individual file size limit, in megabytes
     //UNUSEDmaxTotalSize: 100, // Total limit per jumbotron
 
     // Directory for temporary file uploads

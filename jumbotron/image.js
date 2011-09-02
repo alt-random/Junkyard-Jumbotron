@@ -25,9 +25,10 @@ var execfunc = require('child_process').exec;
                 });
                 break;
                 case '.ogv':
-                execfunc('HandBrakeCLI --preset "iPhone & iPod Touch" --vb 200 --two-pass --turbo --width 320 --turbo --optimize -input '+src+' --output '+dst+".mp4", function(err, stdout, stderr){
+                execfunc('HandBrakeCLI --preset "iPad" --vb 200 --two-pass --turbo --width 320 --turbo --optimize --input '+src+' --output '+dst+'.mp4', function(err, stdout, stderr){
                 console.log(stdout);
                 console.log(err);
+                console.log(stderr);
                 });
                 break;
                 }

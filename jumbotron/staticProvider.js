@@ -110,7 +110,8 @@ module.exports = function staticProvider(options){
                     "Content-Length": stat.size,
                     "Last-Modified": stat.mtime.toUTCString(),
                     "Cache-Control": "public max-age=" + (maxAge / 1000),
-                    "ETag": etag(stat)
+                    "ETag": etag(stat),
+                    "Accept-Ranges": "bytes"
                 };
 
                 // Conditional GET

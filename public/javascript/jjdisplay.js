@@ -188,18 +188,26 @@ $.extend(Display.prototype, {
 	// it occasionally is displayed with the old xform. Another
 	// solution might be to create an entirely new <img> element
 	// when a new image arrives and swap it in for the old one.
-
+    
+    if (this.image.src.indexOf('markers') != -1){
+    var scaleString = 'scale(1, 1)';
+    }
+    else{
+    var scaleString = 'scale('+scaleX+', '+scaleY+')'
+    }
+    
 	var bgPosStr  = marginX  + 'px ' + marginY   + 'px';
 	//var bgSizeStr = imgWidth + 'px ' + imgHeight + 'px';
+
 
     $('#it').css({ 
 	   'position'	: 'absolute',
 	   'margin-left' : marginX +'px',
         'margin-top' : marginY+'px',
-        'transform' : 'scale('+scaleX+', '+scaleY+')',
-	   '-webkit-transform'	: 'scale('+scaleX+', '+scaleY+')',
-	   '-moz-transform'	: 'scale('+scaleX+', '+scaleY+')',
-	   '-o-transform'	: 'scale('+scaleX+', '+scaleY+')',
+        'transform' : scaleString,
+	   '-webkit-transform'	: scaleString,
+	   '-moz-transform'	: scaleString,
+	   '-o-transform'	: scaleString,
 			 });
 
 	/*this.imgElem.css({ width  : docWidth  + 'px',
@@ -421,6 +429,7 @@ $.extend(Display.prototype, {
     },
 
     handleTouchend: function handleTouchend(event) {
+    media.play();
 	event.preventDefault();
 	if (this.mode == 'scaling' || this.mode == 'dragging')
 	    this.mode = 'idle';
@@ -512,8 +521,9 @@ $.extend(Display.prototype, {
                 this.image.id = 'it';
                 this.image.className = 'c1';
                 this.image.src = args.src;  
-                this.image.height = args.vp.height;
-                this.image.width = args.vp.width;
+                this.image.loop = true;
+                //this.image.height = args.vp.height;
+               // this.image.width = args.vp.width;
                 var div = document.getElementById('crop');
                 $(div).empty();
                 div.appendChild(this.image);
@@ -528,24 +538,32 @@ $.extend(Display.prototype, {
                 this.image = new videotr();
         	    this.image.src = args.src;
             }*/
-            else{  
-                var blankPath = args.src.slice(0, args.src.lastIndexOf('.'));
+            else{
+                var blankPath = 'http://' + window.location.hostname + ':8090/' + args.src.slice(0, args.src.lastIndexOf('.'));
                 var div = document.getElementById('crop');
+                console.log(blankPath);
                 $(div).empty();
                 this.image = new videotr();
-                    this.image.height = args.vp.height;
-                    this.image.width = args.vp.width;
-                    this.image.controls = true;
+                    //this.image.height = args.vp.height;
+                    //this.image.width = args.vp.width;
+                    this.image.controls = 'controls';
+                    this.image.autobuffer = true;
+                    this.image.preload = true;
+                    this.image.className ='tt';
                     var s = document.createElement('source');
                     s.src = blankPath+'.ogv';
                     s.type = 'video/ogg; codecs="theora, vorbis"';
-                    var s2 = document.createElement('source');
+                   var s2 = document.createElement('source');
                     s2.src = blankPath+'.mp4';
                     s2.id = 'placeholder';
-                    s2.type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"';
-                    console.log(blankPath);
+                    //s2.type='video/mp4';
+                   // console.log(s2);
                     this.image.appendChild(s2);
-                    this.image.appendChild(s);                    
+                    this.image.appendChild(s);   
+
+                    var trickery = document.createElement('div');
+                trickery.id = 'placeholder';
+                div.appendChild(trickery);//checks that src exists                 
             }
             
         }
