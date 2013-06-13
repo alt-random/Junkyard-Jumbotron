@@ -14,22 +14,21 @@ all: node-packages python-extension
 # Install required node modules
 # TODO: Probably should be local to avoid stepping on anyones toes.
 node-packages:
-	$(NPM) install chaos@0.1.6-pre
-	$(NPM) install connect@0.5.9
-	$(NPM) install express@1.0.7
-	$(NPM) install formidable@0.9.11
-	$(NPM) install gently@0.8.0
-	$(NPM) install gm@0.4.0
-	$(NPM) install iconv@1.0.0
-	$(NPM) install jade@0.9.1
-	$(NPM) install log4js@0.2.3
-	$(NPM) install node-dev@0.1.5
-	$(NPM) install qs@0.0.5
-	$(NPM) install socket.io@0.6.17
-	$(NPM) install underscore@1.1.4
-	$(NPM) install mailparser@0.1.0
-	$(NPM) install email@0.2.2
-	$(NPM) install mime@1.2.2
+	$(NPM) install chaos
+	$(NPM) install connect
+	$(NPM) install express
+	$(NPM) install formidable
+	$(NPM) install gently
+	$(NPM) install gm
+	$(NPM) install iconv
+	$(NPM) install jade
+	$(NPM) install log4js
+	$(NPM) install node-dev
+	$(NPM) install qs
+	$(NPM) install socket.io
+	$(NPM) install underscore
+	$(NPM) install mailparser
+	$(NPM) install email
 
 # Make python extension
 python-extension:

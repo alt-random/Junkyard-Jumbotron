@@ -13,11 +13,12 @@ var path = require('path');
 var urlParse = require('url').parse;
 var fs = require('fs');
 var exec = require('child_process').exec;
+
 // 3rd party add-on libs
 var io = require('socket.io');
 var formidable = require('formidable');
 var express = require('express');
-var log4js = require('log4js')(); //note the need to call the function
+var log4js = require('log4js'); //note the need to call the function
 
 // Use our own until connect.staticProvider makes clearCache accessible
 // https://github.com/senchalabs/connect/issues/issue/187
@@ -89,7 +90,7 @@ Server.prototype = {
 	// Format with timestamp, for log file
 	function layout (loggingEvent) {
 	    var timestamp = loggingEvent.startTime
-		.toFormattedString("MM-dd hh:mm:ss.SSS: ");
+		.toLocaleString();
 	    var output = timestamp + loggingEvent.message;
 	    if (loggingEvent.exception)
 		output += '\n' + timestamp + layoutException(loggingEvent);
@@ -107,11 +108,11 @@ Server.prototype = {
 	var config = params.logging;
 	log4js.clearAppenders();
 	if (config.useConsole)
-	    log4js.addAppender(log4js.consoleAppender(layoutSimple));
+	    log4js.addAppender(log4js.appenders.console());
 	if (config.useFile)
-	    log4js.addAppender(log4js.fileAppender(config.filename, layout,
-						   config.maxFileSize, config.backups,
-						   config.pollInterval));
+		log4js.loadAppender('file');
+	    log4js.addAppender(log4js.appenders.file(config.filename, layout,
+						   config.maxFileSize, config.backups));
 
 	// Set logging level, and clear out debug function for speed
 	var logger = log4js.getLogger();
@@ -158,41 +159,46 @@ Server.prototype = {
 	info('Starting Junkyard Jumbotron Server');
 
 	// Create server with the given middleware
-	var server = this._server = express.createServer(
-	    // Decode cookies
-	    express.cookieDecoder(),
-	    
-	    // Decode forms and body
-	    express.bodyDecoder(),
-
-	    // Intercept thumbnail requests.
-	    function(req, res, next) {
+	var server = express();
+	
+	// Template options
+	server.set('views', params.viewsDir);
+	server.set('view engine', 'jade');
+	server.set('view options', { layout: false } );
+	
+	// Hook up parsers
+	server.use(express.cookieParser());
+	server.use(express.bodyParser());
+	server.use(function(req, res, next) 
+	{
 		if (! req.query.tn)
-		    return next();
+	    	return next();
 
 		var url = urlParse(req.url);
 		if (url.pathname.indexOf('..') != -1)
-		    return next();
+	    	return next();
 
 		var filename = path.join(params.resourceDir, url.pathname);
-		Image.makeThumbnail(filename, 80, function(err, filename) {
-		    if (err) {
-			res.send(err, 404);
+		Image.makeThumbnail(filename, 80, function(err, filename) 
+		{
+		    if (err) 
+		    {
+				res.send(err, 404);
 		    }
-		    else {
-			req.url = filename.slice(params.resourceDir.length);
-			next(); // pass to static provider
+		    else 
+		    {
+				req.url = filename.slice(params.resourceDir.length);
+				next(); // pass to static provider
 		    }
 		});
-	    },
-
-	    // Intercept requests for static files
-	    staticProvider(path.join(__dirname, params.resourceDir))
-	);
+	});
+	
+	// Default static
+	server.use(express.static(path.join(__dirname, params.resourceDir)));
 
 	// Add middleware for dev mode
 	server.configure('development', function() {
-	    //server.use(express.logger());
+	    server.use(express.logger());
 	    server.use(express.errorHandler({ dumpExceptions: true,
 					      showStack: true }));
 	});
@@ -208,18 +214,15 @@ Server.prototype = {
 	    error('UNCAUGHT EXCEPTION', err);
 	});
 
-	// Template options
-	server.set('views', params.viewsDir);
-	server.set('view engine', 'jade');
-	server.set('view options', { layout: null } );
 
 	// Routes
 	server.get('/', function(req, res) {
-	    res.render('index');
+;	    res.render('index');
 	});
 	server.get('/admin'     , this.handleAdmin      .bind(this));
 	server.get('/:jumbotron', this.handleJoin       .bind(this));
 	server.post('/:cmd'     , this.handlePostMessage.bind(this));
+	this._server = http.createServer(server);
     },
 
     // ----------------------------------------------------------------------
@@ -395,8 +398,8 @@ Server.prototype = {
 	else if (args)
 	    debug(controllerStr, '>', args);
 
-	res.send({ status: status, args: args },
-		 { 'Content-Type': 'text/plain' });
+	res.set('Content-Type', 'text/plain');
+	res.send({ status: status, args: args });
     },
 
     postMsgHandlers: {

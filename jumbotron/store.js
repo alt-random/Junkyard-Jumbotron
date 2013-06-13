@@ -46,7 +46,8 @@ Store.prototype = {
     },
 
     _jumbotronFromString: function _jumbotronFromString(string) {
-	return new Jumbotron(JSON.parse(string));
+	//return new Jumbotron(JSON.parse(string));
+    return new Jumbotron(string);
     },
 
     _filterJumbotronsByState: function _filterJumbotronsByState(jumbotrons, filter) {
