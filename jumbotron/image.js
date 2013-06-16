@@ -158,15 +158,23 @@ Image.getSampleImageFiles = function getSampleImageFiles(cb) {
 };
 
 Image._makeThumbnail = function _makeThumbnail(src, dst, width, height, cb) {
-    var loc = dst.slice(0, dst.lastIndexOf('.'))+'.jpg';
-    var comm = "ffmpeg -i "+src+" -f mjpeg -ss 0 -s "+width+"x"+height+" -vframes 1 -an "+loc;
+    /*var loc = dst.slice(0, dst.lastIndexOf('.'))+'.jpg';
+    var comm = "/opt/local/bin/ffmpeg -i "+src+" -f mjpeg -ss 0 -s "+width+"x"+height+" -vframes 1 -an "+loc;
     execfunc(comm, function(err, stdout, stderr){
     if(err)    
         console.log(err);
     });
 
                 compatibility(src);
-    
+    */
+    gm(src)
+    .gravity('Center')
+    // gm 1.3.5 doesn't support ^ postfix for resize
+//.resize(width, height + '^')
+    .resize(width, height)
+    .crop(width, height, 0, 0)
+    .noProfile()
+    .write(dst, cb);
 };
 
 Image.makeThumbnail = function makeThumbnail(fileName, size, cb) {
@@ -222,8 +230,9 @@ gm.prototype.identify = function(callback){
     }
     self._iq = [callback];
     self._identifying = true;
-    var cmd = "ffmpeg -i "+self.source+" -f mjpeg -ss 0 -vframes 1 -an - 2>/dev/null | gm identify -ping -verbose -";
-    self._exec(cmd, function(err, stdout, stderr) {
+    // ffmpeg -i "+self.source+" -f mjpeg -ss 0 -vframes 1 -an - 2>/dev/null |
+    var cmd = "identify -ping -verbose " + self.source;
+    self._exec(cmd.split(' '), function(err, stdout, stderr) {
 	if (err)
 	    return callback.call(self, err, stdout, stderr, cmd);
 	stdout = (stdout||"").trim().replace(/\r\n|\r/g, "\n");

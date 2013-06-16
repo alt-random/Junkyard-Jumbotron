@@ -85,14 +85,15 @@ function Client() {
 			      trace: 'false' });
     this.doDebug = this.query.debug == 'undefined' || this.query.debug == 'true';
     this.doTrace = this.query.trace == 'undefined' || this.query.trace == 'true';
-    this.socket = null;
+    this.socketNS = null;
     this.pingTimer = null;
 }
 
 Client.prototype = {
 
     initSocket: function initSocket() {
-	var socket = this.socket = new io.Socket(null, {
+    var socket = this.socketNS = io.connect('http://localhost');
+	/*var socket = this.socketNS = new io.Socket(null, {
 	    // Everything but flashsocket, as per comments in google groups
 	    //   (flashsocket are not working well in Android)
 	    transports: ['websocket', 'htmlfile', 'xhr-multipart',
@@ -100,11 +101,11 @@ Client.prototype = {
 	    connectTimeout: 5000,
 	    tryTransportsOnConnectTimeout: true,
 	    rememberTransport: true
-	});
+	});*/
 
 	// socket.90 v0.6.8: timeout doesn't work very well
 	socket.on('connect', bind(this, function() {
-	    this.info('Connected with', this.socket);
+	    this.info('Connected with', this.socketNS.socket.options.host);
 	    // Stop any pending connect
 	    this.sendInitMsg();
 
@@ -130,10 +131,10 @@ Client.prototype = {
     },
 
     connectSocket: function connectSocket() {
-	var socket = this.socket;
+	var socket = this.socketNS.socket;
 	if (! socket.connected && ! socket.connecting) {
-	    this.info('Connecting to', socket.host, socket.options.port);
-	    socket.connect();
+	    this.info('Connecting to', socket.options.host, socket.options.port);
+	    socketNS.connect();
 	}
     },
 
@@ -186,8 +187,8 @@ Client.prototype = {
 	
     sendMsg: function sendMsg(cmd, args) {
 	this.trace(">", cmd, JSON.stringify(args));
-	if (this.socket)
-	    this.socket.send(JSON.stringify({cmd: cmd, args: args}));
+	if (this.socketNS)
+	    this.socketNS.send(JSON.stringify({cmd: cmd, args: args}));
     },
 
     sendInitMsg: function sendInitMsg(msg) {

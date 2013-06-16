@@ -484,7 +484,26 @@ Server.prototype = {
 						 'too big', x('too big'));
 
 		// Let formidable parse and save the data
-		var form = new formidable.IncomingForm();
+		if (req.files)
+		{
+			var file = req.files['file'];
+			if (!file)
+				return this.sendPostResponse(res, controller, 'no file');
+			var type = req.body.type;
+			// Need to rename file so extension works (ugly)
+			var newPath = path.join(path.dirname(file.path),file.name);
+			fs.renameSync(file.path, newPath, null);
+			
+			
+			this.handleUpload(jumbotron, type, newPath, 
+				      this.sendPostResponse.bind(this, res, controller));
+				
+		}
+		else
+		{
+			return this.sendPostResponse(res, controller, 'no file');
+		}
+		/*var form = new formidable.IncomingForm();
 		form.keepExtensions = true;
 		form.parse(req, function(err, fields, files) {
 		    if (err)
@@ -495,7 +514,8 @@ Server.prototype = {
  			return this.sendPostResponse(res, controller, 'no file');
 		    this.handleUpload(jumbotron, type, file.path, 
 				      this.sendPostResponse.bind(this, res, controller));
-		}.bind(this));
+				      
+		}.bind(this));*/
 	    }
 	},
 
