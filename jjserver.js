@@ -492,7 +492,7 @@ Server.prototype = {
 			var type = req.body.type;
 			// Need to rename file so extension works (ugly)
 			var newPath = path.join(path.dirname(file.path),file.name);
-			fs.renameSync(file.path, newPath, null);
+			fs.renameSync(file.path, newPath);
 			
 			
 			this.handleUpload(jumbotron, type, newPath, 

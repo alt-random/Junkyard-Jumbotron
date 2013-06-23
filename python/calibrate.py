@@ -189,7 +189,7 @@ def _calibrate(jumbotron, displays, image, debug=False, debug_image=False):
 
     # Find markers
     found_markers = artoolkit.detect(image, confidence_threshold=0.5,
-                                     debug=False, debug_image=debug_image)
+                                     debug=debug, debug_image=debug_image)
 
     # Throw out unknown markers
     markers = [marker for marker in found_markers if marker.id in displays]
@@ -309,9 +309,17 @@ def main(argv):
         print(str(ioe), file=sys.stderr)
         return -1
     image = _reorient_image(image)
-    if image.mode != 'RGB' or image.mode != 'RGBA':
+    if image.mode != 'RGB' and image.mode != 'RGBA':
         image = image.convert('RGB')
-
+    
+    width, height = image.size
+    
+    # For some reason ARToolkitLib doesn't like images bigger than this.
+    if (height > 1024) or (width > 768):
+        # Resize the image, preserving aspect ratio
+        size = 1024,768
+        image.thumbnail(size, Image.ANTIALIAS)
+        
     # Calibrate
     _calibrate(jumbotron, jumbotron.displays, image, debug=False, debug_image=False)
 

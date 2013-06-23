@@ -92,16 +92,8 @@ function Client() {
 Client.prototype = {
 
     initSocket: function initSocket() {
-    var socket = this.socketNS = io.connect('http://localhost');
-	/*var socket = this.socketNS = new io.Socket(null, {
-	    // Everything but flashsocket, as per comments in google groups
-	    //   (flashsocket are not working well in Android)
-	    transports: ['websocket', 'htmlfile', 'xhr-multipart',
-			 'xhr-polling', 'jsonp-polling'],
-	    connectTimeout: 5000,
-	    tryTransportsOnConnectTimeout: true,
-	    rememberTransport: true
-	});*/
+    	this.info(window.location.hostname);
+    var socket = this.socketNS = io.connect('http://',  window.location.hostname);
 
 	// socket.90 v0.6.8: timeout doesn't work very well
 	socket.on('connect', bind(this, function() {

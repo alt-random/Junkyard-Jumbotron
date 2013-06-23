@@ -1,23 +1,6 @@
 // ======================================================================
 // Viewport class
-/*$(document).ready(function(){
-//document.getElementById('crop').appendChild(media);
-//});*/
-var media;
-function videotr(){
-media = document.createElement('video');
-media.preload = true;
-//media.controls = true;
-media.className = 'c1';
-media.id = 'it'; 
-document.getElementById('crop').appendChild(media);
-//media.loop = true;
-//media.autoplay = true;
 
-
-return media;
-
-}
 function Viewport(options) {
     options = options || {};
 
@@ -71,17 +54,17 @@ function Display() {
     Client.call(this);
 
     // Cache for speed
-    this.imgElem = $('#it');
+    this.imgElem = $('#img');
     this.cropElem = $('#crop');
 
     this.mode = 'idle';	// idle|dragging|scaling|loading
 
-    this.image = new videotr();
+    this.image = new Image();
     this.image.onload  = bind(this, this.onImageLoad);
     this.image.onerror = bind(this, this.onImageError);
     this.viewport = new Viewport();
     this.frozen = false; // Can we pan and zoom?
-    
+
     this.firstMouseX = 0;
     this.firstMouseY = 0;
     this.lastTranslateX = 0;
@@ -99,6 +82,7 @@ function Display() {
 }
 
 Display.prototype = new Client();
+
 $.extend(Display.prototype, {
 
     initDom: function initDom() {
@@ -129,16 +113,9 @@ $.extend(Display.prototype, {
 
     transformImg: function transformImg() {
 	var img = this.image;
+	if (! img.src || ! img.width || ! img.height)
+	    return;
 
-//scales height on ppi of client.
-
-  //  if(this.image.videoHeight){
-  // img.height = this.image.videoHeight;
-  // img.width = this.image.videoWidth;
-    //}
-	if (!document.getElementById('placeholder')){// || !img.width || !img.height){
-    return;	   
-    }
 	// Cache for speed
 	var round = Math.round;
 	var vp = this.viewport;
@@ -159,8 +136,8 @@ $.extend(Display.prototype, {
 	var scaleY = docHeight / vp.height;
 
 	// Final image size
-//	var imgWidth  = round(img.width  * scaleX);
-	//var imgHeight = round(img.height * scaleY);
+	var imgWidth  = round(img.width  * scaleX);
+	var imgHeight = round(img.height * scaleY);
 
 	// Margins to push the image into place
 	var marginX = round(-vp.x * scaleX);
@@ -174,7 +151,6 @@ $.extend(Display.prototype, {
 			    'rotate(270deg) translate(-100%, 0%)'][vp.rotation];
 	this.cropElem.css({width : docWidth + 'px',
 			   height: docHeight + 'px',
-               'transform' : transformStr,
 			   '-webkit-transform'	: transformStr,
 			   '-moz-transform'	: transformStr,
 			   '-o-transform'	: transformStr
@@ -188,31 +164,12 @@ $.extend(Display.prototype, {
 	// it occasionally is displayed with the old xform. Another
 	// solution might be to create an entirely new <img> element
 	// when a new image arrives and swap it in for the old one.
-    
-    if (this.image.src.indexOf('markers') != -1){
-    var scaleString = 'scale(1, 1)';
-    }
-    else{
-    var scaleString = 'scale('+scaleX+', '+scaleY+')'
-    }
-    
+
 	var bgPosStr  = marginX  + 'px ' + marginY   + 'px';
-	//var bgSizeStr = imgWidth + 'px ' + imgHeight + 'px';
-
-
-    $('#it').css({ 
-	   'position'	: 'absolute',
-	   'margin-left' : marginX +'px',
-        'margin-top' : marginY+'px',
-        'transform' : scaleString,
-	   '-webkit-transform'	: scaleString,
-	   '-moz-transform'	: scaleString,
-	   '-o-transform'	: scaleString,
-			 });
-
-	/*this.imgElem.css({ width  : docWidth  + 'px',
+	var bgSizeStr = imgWidth + 'px ' + imgHeight + 'px';
+	this.imgElem.css({ width  : docWidth  + 'px',
 			   height : docHeight + 'px',
-			   'background-image'		: video,
+			   'background-image'		: 'url(' + img.src + ')',
 			   'background-position'	: bgPosStr,
 			   'background-size'		: bgSizeStr,
 			   '-webkit-background-size'	: bgSizeStr,
@@ -236,7 +193,6 @@ $.extend(Display.prototype, {
     },
     
     translateViewport: function translateViewport(x, y) {
-
 	// For consistency with how scaling is done, store last values,
 	// invert, and retranslate.
 	var vp = this.viewport;
@@ -275,7 +231,6 @@ $.extend(Display.prototype, {
     // the first point should reset the scale). We store how much we scaled last
     // time, invert it, and scale what we want.
     scaleViewport: function scaleViewport(x, y, ox, oy) {
-
 	var vp = this.viewport;
 
 	// Convert origin from window pixels to viewport pixels
@@ -321,8 +276,8 @@ $.extend(Display.prototype, {
 
     handleResize: function handleResize() {
 	// Update css, update image transform, and notify the server
-	//$('#finalcrop').css({'width' : '100%',//$(window).width() + 'px',
-			//     'height': '100%'});//$(window).height() + 'px'}); 
+	$('#finalcrop').css({width : $(window).width() + 'px',
+			     height: $(window).height() + 'px'}); 
 	this.transformImg();
 	this.sendSizeMsg();
     },
@@ -429,7 +384,6 @@ $.extend(Display.prototype, {
     },
 
     handleTouchend: function handleTouchend(event) {
-    media.play();
 	event.preventDefault();
 	if (this.mode == 'scaling' || this.mode == 'dragging')
 	    this.mode = 'idle';
@@ -500,10 +454,8 @@ $.extend(Display.prototype, {
     },
 
     onImageError: function onImageError() {
-
 	this.error("Can't load image", this.image.src);
 	this.mode = 'idle';
-
     },
 
     msgHandlers : {
@@ -511,72 +463,17 @@ $.extend(Display.prototype, {
 	load: function load(args) {
 	    var image = this.image;
 	    if (this.image.src != args.src) {
-		    this.mode = 'loading';
-		    this.frozen = args.frozen;
-		    this.viewport = new Viewport(args.vp);
-            var oktypes = {'.jpg':1, '.gif':1, '.png':1};
-            var type = args.src.slice(args.src.lastIndexOf('.'));
-            if (type in oktypes){
-                this.image = new Image();
-                this.image.id = 'it';
-                this.image.className = 'c1';
-                this.image.src = args.src;  
-                this.image.loop = true;
-                //this.image.height = args.vp.height;
-               // this.image.width = args.vp.width;
-                var div = document.getElementById('crop');
-                $(div).empty();
-                div.appendChild(this.image);
-                var trickery = document.createElement('div');
-                trickery.id = 'placeholder';
-                div.appendChild(trickery);//checks that src exists
-            }
-         /*   else if (fake.canPlayType(lib[ext])){
-                console.log(navigator.userAgent);//fake.canPlayType(lib[ext]));
-                var div = document.getElementById('crop');
-                $(div).empty();
-                this.image = new videotr();
-        	    this.image.src = args.src;
-            }*/
-            else{
-                var blankPath = 'http://' + window.location.hostname + ':8090/' + args.src.slice(0, args.src.lastIndexOf('.'));
-                var div = document.getElementById('crop');
-                console.log(blankPath);
-                $(div).empty();
-                this.image = new videotr();
-                    //this.image.height = args.vp.height;
-                    //this.image.width = args.vp.width;
-                    this.image.controls = 'controls';
-                    this.image.autobuffer = true;
-                    this.image.preload = true;
-                    this.image.className ='tt';
-                    var s = document.createElement('source');
-                    s.src = blankPath+'.ogv';
-                    s.type = 'video/ogg; codecs="theora, vorbis"';
-                   var s2 = document.createElement('source');
-                    s2.src = blankPath+'.mp4';
-                    s2.id = 'placeholder';
-                    //s2.type='video/mp4';
-                   // console.log(s2);
-                    this.image.appendChild(s2);
-                    this.image.appendChild(s);   
-
-                    var trickery = document.createElement('div');
-                trickery.id = 'placeholder';
-                div.appendChild(trickery);//checks that src exists                 
-            }
-            
-        }
-        this.onImageLoad();
-        this.mode = 'idle';
-	//	if (this.image.complete || this.image.readyState === 4){
-	//	    this.onImageLoad();
-	//    }
-	 //   else{
-	//	// Pass to viewport message handler
-	//	    this.msgHandlers.viewport.call(this, args.viewport);
-	//    }
-
+		this.mode = 'loading';
+		this.frozen = args.frozen;
+		this.viewport = new Viewport(args.vp);
+		this.image.src = args.src;
+		if (this.image.complete || this.image.readyState === 4)
+		    this.onImageLoad();
+	    }
+	    else {
+		// Pass to viewport message handler
+		this.msgHandlers.viewport.call(this, args.viewport);
+	    }
 	},
 
 	vp: function vp(args) {
@@ -600,7 +497,6 @@ $.extend(Display.prototype, {
 	}
 
     }
-    
 });
 
 // ----------------------------------------------------------------------

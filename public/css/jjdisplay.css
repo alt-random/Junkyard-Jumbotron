@@ -12,34 +12,16 @@ body {
 }
 
 #finalcrop {
-position:absolute;
-overflow:hidden;
-width:100%;
-height:100%;
-left:0px;
-top:0px;
+    overflow: hidden;
 }
 #crop {
     -webkit-transform-origin: 0% 0%;
     -moz-transform-origin: 0% 0%;
 }
 #img {
+    background-repeat: no-repeat;
+}
 
-}
-#ppi{
-  height: 1in;
-  left: -100%;
-  position: absolute;
-  top: -100%;
-  width: 1in;
-}
-#it{
-position: static;
-display: block;
-margin-left: auto;
-margin-right: auto;
-height:100%;
-}
 #label {
     display: none;
     color: red;
@@ -57,10 +39,4 @@ height:100%;
 }
 #name {
     font-size: 2em;
-}
-#drag {
-width:100%;
-height:100%
-z-index:100;
-
 }

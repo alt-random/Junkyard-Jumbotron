@@ -3,31 +3,33 @@
 # Hand generated.
 #############################################################################
 
-ARDIR   = ARToolKitPlus_2.1.1
+ARDIR   = ARToolKitPlus-2.3.0
 
 CXX	= g++
-CFLAGS	= -g -Wno-write-strings -I$(ARDIR)/include -I/usr/include
+CFLAGS	= -g -Wall -Wno-write-strings -I$(ARDIR)/include -I/usr/include -L$(ARDIR)/lib
 LFLAGS	= 
 
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
 	CFLAGS := -msse3 $(CFLAGS)
-	LFLAGS := -bundle -undefined dynamic_lookup $(LDFLAGS)
+	LFLAGS := -bundle -undefined dynamic_lookup $(LDFLAGS) -lARToolKitPlus
+	LIB_EXT=dylib
 else # Linux
 	CFLAGS := -fPIC $(CFLAGS)
-	LFLAGS := -shared $(LDFLAGS)
+	LFLAGS := -shared $(LDFLAGS) -llibARToolKitPlus
+	LIBEXT=so
 endif
 
 TARGET = lib/artoolkit_.so
 
-all: artoolkit_.cpp $(ARDIR)/lib/libARToolKitPlus.a
-	$(CXX) $(CFLAGS) $(LFLAGS) $^ -o $(TARGET)
+all: artoolkit_.cpp $(ARDIR)/lib/libARToolKitPlus.$(LIBEXT)
+	$(CXX) $(CFLAGS) $(LFLAGS) artoolkit_.cpp -o $(TARGET)
 
 clean:
 	/bin/rm -rf $(TARGET) $(TARGET).dSYM
-	$(MAKE) -C $(ARDIR)/src -f Makefile.brownbag clean
+	$(MAKE) -C $(ARDIR) clean
 
 # Recursively call make on ARToolKitPlus
-.PHONY : $(ARDIR)/lib/libARToolKitPlus.a
-ARToolKitPlus_2.1.1/lib/libARToolKitPlus.a: 
-	$(MAKE) -C $(ARDIR)/src -f Makefile.brownbag all
+.PHONY : $(ARDIR)/lib/libARToolKitPlus.$(LIBEXT)
+$(ARDIR)/lib/libARToolKitPlus.$(LIBEXT): 
+	$(MAKE) -C $(ARDIR)

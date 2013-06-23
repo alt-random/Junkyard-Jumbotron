@@ -2,26 +2,17 @@
 // A simple C glue layer between ARToolKitPlus (ARTK+) and python.
 //
 
-#include "ARToolKitPlus/TrackerSingleMarkerImpl.h"
-
-// ----------------------------------------------------------------------
-// Logger
-// ARTK+ uses this class for informational messages.
-
-class Logger : public ARToolKitPlus::Logger {
-    void artLog(const char* nStr) {
-        printf("%s", nStr);
-    }
-};
+#include "ARToolKitPlus/TrackerSingleMarker.h"
+#include "ARToolkitPlus/Camera.h"
 
 // ----------------------------------------------------------------------
 // Camera
 // A dummy ARTK+ camera using the iphone-camera specifications.  We need to use
 // a subclass for access to protected member undist_iterations
 
-class Camera : public ARToolKitPlus::CameraAdvImpl {
+class LocalCamera : public ARToolKitPlus::Camera {
   public:
-	Camera(int width, int height) {
+	LocalCamera(int width, int height) {
 
 		// Iphone values from here:
 		// www.flickr.com/groups/takenwithiphone/discuss/72157610993645448/
@@ -54,30 +45,32 @@ class Camera : public ARToolKitPlus::CameraAdvImpl {
 // Tracker
 // The actual tracker, needed for access to protected method checkPixelFormat
 
-class Tracker : public ARToolKitPlus::TrackerSingleMarkerImpl<6,6,1024, 1, 32> {
+class LocalTracker : public ARToolKitPlus::TrackerSingleMarker{
+private:
+    bool debug;
   public:
-	Tracker(int width, int height, bool debug) :
-		ARToolKitPlus::TrackerSingleMarkerImpl<6,6,1024, 1, 32>(width, height) {
+	LocalTracker(int width, int height, bool debug) :
+		ARToolKitPlus::TrackerSingleMarker(width, height, 8, 6,6,6,0) {
 		// Set logger
 		if (debug)
-			setLogger(new Logger());
+            this->debug = debug;
+			//setLogger(new Logger());
 	}
 
 	virtual bool init() {
 		// Work with luminance images
 		setPixelFormat(ARToolKitPlus::PIXEL_FORMAT_LUM);
 		if ( ! checkPixelFormat()) {	
-			if (logger)
-				logger->artLog("ARToolKitPlus: Invalid Pixel Format!");
+			if (debug)
+				printf("ARToolKitPlus: Invalid Pixel Format!");
 			return false;
 		}
 
 		// Memory
-		if (marker_infoTWO == NULL)
-			marker_infoTWO = ARToolKitPlus::artkp_Alloc<ARToolKitPlus::ARMarkerInfo2>(32);
+		ARToolKitPlus::TrackerSingleMarker::init(NULL, NULL, NULL);
 
 		// Camera
-		Camera *camera = new Camera(screenWidth, screenHeight);
+		LocalCamera *camera = new LocalCamera(screenWidth, screenHeight);
 		setCamera(camera, 1, 1000);
 
 		// const ARFloat* mat = getProjectionMatrix();
@@ -123,8 +116,8 @@ class Tracker : public ARToolKitPlus::TrackerSingleMarkerImpl<6,6,1024, 1, 32> {
 extern "C" {
 
 // Create a new tracker for images of a given size.
-Tracker *create(int width, int height, bool debug) {
-    Tracker *tracker = new Tracker(width, height, debug);
+LocalTracker *create(int width, int height, bool debug) {
+    LocalTracker *tracker = new LocalTracker(width, height, debug);
 	if (! tracker->init()) {
 		delete tracker;
 		tracker = NULL;
@@ -133,12 +126,12 @@ Tracker *create(int width, int height, bool debug) {
 }
 
 // Destroy a tracker
-void destroy(Tracker *tracker) {
+void destroy(LocalTracker *tracker) {
 	delete tracker;
 }
 
 // Set the tracker luminance and auto thresholds.
-void set_thresholds(Tracker *tracker,
+void set_thresholds(LocalTracker *tracker,
 					int threshold, bool autothreshold, int autoretries) {
 	tracker->setThreshold(threshold);
 	tracker->activateAutoThreshold(autothreshold);
@@ -146,12 +139,12 @@ void set_thresholds(Tracker *tracker,
 }
 
 // Return a marker
-ARToolKitPlus::ARMarkerInfo *get_marker(Tracker *tracker, int which) {
+ARToolKitPlus::ARMarkerInfo *get_marker(LocalTracker *tracker, int which) {
 	return tracker->getMarker(which);
 }
 
 // Return the transform associated with a marker
-void get_marker_transform(Tracker *tracker, ARToolKitPlus::ARMarkerInfo *marker,
+void get_marker_transform(LocalTracker *tracker, ARToolKitPlus::ARMarkerInfo *marker,
 						  float* matrix) {
 	float patt_center[2] = {0.0f,0.0f};
 	float patt_size = 1.0f;
@@ -159,7 +152,7 @@ void get_marker_transform(Tracker *tracker, ARToolKitPlus::ARMarkerInfo *marker,
 }
 
 // Print the markers found by the tracker
-void print_markers(Tracker *tracker, int num) {
+void print_markers(LocalTracker *tracker, int num) {
 	printf("found %d markers\n", num);
 	for(int i=0; i<num; i++) {
 		ARToolKitPlus::ARMarkerInfo *m = get_marker(tracker, i);
@@ -180,7 +173,7 @@ void print_markers(Tracker *tracker, int num) {
 }
 
 // Detect markers in an image
-int detect(Tracker *tracker, unsigned char *data) {
+int detect(LocalTracker *tracker, unsigned char *data) {
 	ARToolKitPlus::ARMarkerInfo *markers = NULL;
 	int num = 0;
 	if (tracker->arDetectMarkerLite(data, tracker->getThreshold(), &markers, &num) < 0)
@@ -217,7 +210,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-	Tracker *tracker = (Tracker*) create(width, height, true);
+	LocalTracker *tracker = (LocalTracker*) create(width, height, true);
 	int num = detect(tracker, cameraBuffer);
 	print_markers(tracker, num);
 	destroy(tracker);
@@ -225,3 +218,5 @@ int main(int argc, char** argv) {
     delete [] cameraBuffer;
 	return 0;
 }
+
+
