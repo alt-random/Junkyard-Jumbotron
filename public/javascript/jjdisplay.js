@@ -515,7 +515,7 @@ $.extend(Display.prototype, {
 
 	load: function load(args) {
 	    var ext = args.src.substr(args.src.lastIndexOf('.') + 1);
-	    if (ext = "m3u8")
+	    if (ext == "m3u8")
 	    {
 	    	if (this.video.src != args.src) 
 	    	{
