@@ -29,6 +29,8 @@ node-packages:
 	$(NPM) install underscore
 	$(NPM) install mailparser
 	$(NPM) install email
+	$(NPM) install m3u8
+	$(NPM) install node-ffprobe
 
 # Make python extension
 python-extension:

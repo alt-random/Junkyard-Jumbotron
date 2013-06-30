@@ -39,6 +39,10 @@ module.exports = {
                         '.mp4':1,
                        '.ogv':1,
                         ogv:1},
+                        
+    allowedPlaylistTypes:{'.m3u':1,
+    					 'm3u8':1},
+
     maxFileSize: 11, // Individual file size limit, in megabytes
     //UNUSEDmaxTotalSize: 100, // Total limit per jumbotron
 

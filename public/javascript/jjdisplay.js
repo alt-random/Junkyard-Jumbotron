@@ -56,12 +56,19 @@ function Display() {
     // Cache for speed
     this.imgElem = $('#img');
     this.cropElem = $('#crop');
+    this.vidElem = $('#vid');
 
     this.mode = 'idle';	// idle|dragging|scaling|loading
 
     this.image = new Image();
     this.image.onload  = bind(this, this.onImageLoad);
     this.image.onerror = bind(this, this.onImageError);
+    
+    this.video = document.getElementById("vid");
+    this.video.onloadedmetadata = bind(this, this.onVideoLoad);
+    this.image.onerror =  bind(this, this.onVideoError);
+    
+    
     this.viewport = new Viewport();
     this.frozen = false; // Can we pan and zoom?
 
@@ -111,10 +118,23 @@ $.extend(Display.prototype, {
     // ----------------------------------------------------------------------
     // Transforms
 
-    transformImg: function transformImg() {
-	var img = this.image;
-	if (! img.src || ! img.width || ! img.height)
-	    return;
+    transformImg: function transformImg(video) {
+    	
+    var vid = null;
+    var img = null;
+	if (video)
+	{
+		vid = this.video;
+		if (! vid.src || ! vid.width || ! vid.height)
+		    return;
+	}
+	else
+	{
+		img = this.image;
+		if (! img.src || ! img.width || ! img.height)
+		    return;
+	}
+
 
 	// Cache for speed
 	var round = Math.round;
@@ -135,9 +155,19 @@ $.extend(Display.prototype, {
 	var scaleX = docWidth  / vp.width;
 	var scaleY = docHeight / vp.height;
 
+	var imgWidth = 0;
+	var imgHeight = 0;
 	// Final image size
-	var imgWidth  = round(img.width  * scaleX);
-	var imgHeight = round(img.height * scaleY);
+	if (video)
+	{
+		imgWidth  = round(vid.width  * scaleX);
+		imgHeight = round(vid.height * scaleY);
+	}
+	else
+	{
+		imgWidth  = round(img.width  * scaleX);
+		imgHeight = round(img.height * scaleY);	
+	}
 
 	// Margins to push the image into place
 	var marginX = round(-vp.x * scaleX);
@@ -167,7 +197,18 @@ $.extend(Display.prototype, {
 
 	var bgPosStr  = marginX  + 'px ' + marginY   + 'px';
 	var bgSizeStr = imgWidth + 'px ' + imgHeight + 'px';
-	this.imgElem.css({ width  : docWidth  + 'px',
+	
+	if (video)
+	{
+		this.vidElem.css({width  : docWidth  + 'px',
+			   height : docHeight + 'px',
+			   'src' : 'url(' + video.src + ')'
+		});
+		this.vidElem.play();
+	}
+	else
+	{
+		this.imgElem.css({ width  : docWidth  + 'px',
 			   height : docHeight + 'px',
 			   'background-image'		: 'url(' + img.src + ')',
 			   'background-position'	: bgPosStr,
@@ -176,6 +217,8 @@ $.extend(Display.prototype, {
 			   '-moz-background-size'	: bgSizeStr,
 			   '-o-background-size'		: bgSizeStr
 			 });
+	}
+
 
 	/*
 	console.log({ docWidth : docWidth + 'px',
@@ -449,7 +492,7 @@ $.extend(Display.prototype, {
     },
 
     onImageLoad: function onImageLoad() {
-	this.transformImg();
+	this.transformImg(false);
 	this.mode = 'idle';
     },
 
@@ -458,22 +501,70 @@ $.extend(Display.prototype, {
 	this.mode = 'idle';
     },
 
+    onVideoLoad: function onVideoLoad() {
+    	this.transformImg(true);
+    	this.mode = 'idle';
+        },
+
+    onVideoError: function onVideoError() {
+    	this.error("Can't load video", this.video.src);
+    	this.mode = 'idle';
+        },
+        
     msgHandlers : {
 
 	load: function load(args) {
-	    var image = this.image;
-	    if (this.image.src != args.src) {
-		this.mode = 'loading';
-		this.frozen = args.frozen;
-		this.viewport = new Viewport(args.vp);
-		this.image.src = args.src;
-		if (this.image.complete || this.image.readyState === 4)
-		    this.onImageLoad();
+	    var ext = args.src.substr(args.src.lastIndexOf('.') + 1);
+	    if (ext = "m3u8")
+	    {
+	    	if (this.video.src != args.src) 
+	    	{
+	    		this.mode = 'loading';
+				this.frozen = args.frozen;
+				this.viewport = new Viewport(args.vp);
+				// Do an ajax query to get the playlist
+				$.get(args.src, function(data){
+					var lines = data.split('\n');
+					for(line in lines)
+					{
+						var str = lines[line];
+						if (str.length>2)
+						{
+							if (str[0]!="#")
+							{
+								this.video.src = str;
+								this.video.load();
+								return false;
+							}
+						}
+					}
+				}.bind(this));
+
+		    }
+	    	else 
+	    	{
+			// Pass to viewport message handler
+			this.msgHandlers.viewport.call(this, args.viewport);
+		    }
 	    }
-	    else {
-		// Pass to viewport message handler
-		this.msgHandlers.viewport.call(this, args.viewport);
+	    else
+	    {
+	    	if (this.image.src != args.src) 
+	    	{
+	    		this.mode = 'loading';
+				this.frozen = args.frozen;
+				this.viewport = new Viewport(args.vp);
+				this.image.src = args.src;
+				if (this.image.complete || this.image.readyState === 4)
+				    this.onImageLoad();
+		    }
+	    	else 
+	    	{
+			// Pass to viewport message handler
+			this.msgHandlers.viewport.call(this, args.viewport);
+		    }
 	    }
+	    
 	},
 
 	vp: function vp(args) {

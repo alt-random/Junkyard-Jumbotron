@@ -13,6 +13,7 @@ var Viewport	= require('./viewport');
 var Controller	= require('./controller');
 var Display	= require('./display');
 var Image	= require('./image');
+var Playlist	= require('./playlist');
 
 var trace = utils.trace;
 
@@ -55,8 +56,17 @@ function Jumbotron(options) {
     for (var d in options.displays)
 	this.addDisplay(new Display(options.displays[d]));
     for (var i in options.images)
-	this.addImage(new Image(options.images[i]));
-
+    {
+    	if (path.extname(options.images[i].src) == ".m3u8")
+    	{
+    		this.addImage(new Playlist(options.images[i]));
+    	}
+    	else
+    	{
+    		this.addImage(new Image(options.images[i]));
+    	}
+    }
+    	
     // Set current image
     this.setFrame(0);
 
@@ -284,17 +294,33 @@ Jumbotron.prototype = utils.inherits(Base, {
 	fs.rename(src, dst, function(err) {
 	    if (err)
 		return cb && cb(err);
-	    var image = new Image({ source: dst });
-	    image.init(function(err) {
-		if (err) {
-		    fs.unlink(dst);
-		    return cb && cb(err);
-		}
-		image.makeThumbnail(params.thumbnailImageSize);
-		this.fitImage("maximize", image);
-		var frame = this.addImage(image);
-		cb && cb(null, image, frame);
-	    }.bind(this));
+	    if (path.extname(dst) == ".m3u8")
+	    {
+	    	var pl = new Playlist({ source: dst });
+	    	pl.init(function(err) {
+	    		if (err)
+	    		{
+	    		    fs.unlink(dst);
+	    		    return cb && cb(err);
+	    		}
+	    		var frame = this.addImage(pl);
+	    		cb && cb(null, pl, null);	
+	    	}.bind(this));
+	    }
+	    else
+	    {
+		    var image = new Image({ source: dst });
+		    image.init(function(err) {
+			if (err) {
+			    fs.unlink(dst);
+			    return cb && cb(err);
+			}
+			image.makeThumbnail(params.thumbnailImageSize);
+			this.fitImage("maximize", image);
+			var frame = this.addImage(image);
+			cb && cb(null, image, frame);
+		    }.bind(this));
+	    }
 	}.bind(this));
 	
     },
