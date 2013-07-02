@@ -131,7 +131,7 @@ $.extend(Display.prototype, {
 	else
 	{
 		img = this.image;
-		if (! img.src || ! img.video || ! img.height)
+		if (! img.src || ! img.width || ! img.height)
 		    return;
 	}
 
