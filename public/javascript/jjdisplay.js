@@ -65,8 +65,8 @@ function Display() {
     this.image.onerror = bind(this, this.onImageError);
     
     this.video = document.getElementById("vid");
-    this.video.onloadedmetadata = bind(this, this.onVideoLoad);
-    this.image.onerror =  bind(this, this.onVideoError);
+    this.video.addEventListener("loadedmetadata", bind(this, this.onVideoLoad));
+    this.video.onerror =  bind(this, this.onVideoError);
     
     
     this.viewport = new Viewport();
@@ -125,13 +125,13 @@ $.extend(Display.prototype, {
 	if (video)
 	{
 		vid = this.video;
-		if (! vid.src || ! vid.width || ! vid.height)
+		if (! vid.src || ! vid.videoWidth || ! vid.videoHeight)
 		    return;
 	}
 	else
 	{
 		img = this.image;
-		if (! img.src || ! img.width || ! img.height)
+		if (! img.src || ! img.video || ! img.height)
 		    return;
 	}
 
@@ -160,8 +160,8 @@ $.extend(Display.prototype, {
 	// Final image size
 	if (video)
 	{
-		imgWidth  = round(vid.width  * scaleX);
-		imgHeight = round(vid.height * scaleY);
+		imgWidth  = round(vid.videoWidth  * scaleX);
+		imgHeight = round(vid.videoHeight * scaleY);
 	}
 	else
 	{
@@ -198,13 +198,19 @@ $.extend(Display.prototype, {
 	var bgPosStr  = marginX  + 'px ' + marginY   + 'px';
 	var bgSizeStr = imgWidth + 'px ' + imgHeight + 'px';
 	
+	//,
+	//   'src' : 'url(' + video.src + ')'
 	if (video)
 	{
 		this.vidElem.css({width  : docWidth  + 'px',
 			   height : docHeight + 'px',
-			   'src' : 'url(' + video.src + ')'
+			   'position'	: "absolute " + bgPosStr,
+			   'size'		: bgSizeStr,
+			   '-webkit-background-size'	: bgSizeStr,
+			   '-moz-background-size'	: bgSizeStr,
+			   '-o-background-size'		: bgSizeStr
 		});
-		this.vidElem.play();
+		this.video.play();
 	}
 	else
 	{
@@ -533,8 +539,8 @@ $.extend(Display.prototype, {
 							if (str[0]!="#")
 							{
 								this.video.src = str;
+								this.video.preload = "none";
 								this.video.load();
-								return false;
 							}
 						}
 					}
