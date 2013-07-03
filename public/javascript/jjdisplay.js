@@ -57,6 +57,7 @@ function Display() {
     this.imgElem = $('#img');
     this.cropElem = $('#crop');
     this.vidElem = $('#vid');
+    this.vidContElem = $('#vidcont');
 
     this.mode = 'idle';	// idle|dragging|scaling|loading
 
@@ -125,7 +126,7 @@ $.extend(Display.prototype, {
 	if (video)
 	{
 		vid = this.video;
-		if (! vid.src || ! vid.videoWidth || ! vid.videoHeight)
+		if (! vid.firstElementChild || !vid.firstElementChild.src || ! vid.videoWidth || ! vid.videoHeight)
 		    return;
 	}
 	else
@@ -202,13 +203,13 @@ $.extend(Display.prototype, {
 	//   'src' : 'url(' + video.src + ')'
 	if (video)
 	{
-		this.vidElem.css({width  : docWidth  + 'px',
+		this.vidContElem.css({width  : docWidth  + 'px',
 			   height : docHeight + 'px',
-			   'position'	: "absolute " + bgPosStr,
-			   'size'		: bgSizeStr,
-			   '-webkit-background-size'	: bgSizeStr,
-			   '-moz-background-size'	: bgSizeStr,
-			   '-o-background-size'		: bgSizeStr
+			   position	: bgPosStr,
+			   size		: bgSizeStr,
+			   //'-webkit-background-size'	: bgSizeStr,
+			   //'-moz-background-size'	: bgSizeStr,
+			   //'-o-background-size'		: bgSizeStr
 		});
 		this.video.play();
 	}
@@ -508,6 +509,7 @@ $.extend(Display.prototype, {
     },
 
     onVideoLoad: function onVideoLoad() {
+    	this.video.currentTime = 0;
     	this.transformImg(true);
     	this.mode = 'idle';
         },
@@ -538,8 +540,13 @@ $.extend(Display.prototype, {
 						{
 							if (str[0]!="#")
 							{
-								this.video.src = str;
-								this.video.preload = "none";
+								this.video.preload = "meta";
+								var srcElem = document.createElement('source');
+								srcElem.src = str;
+								srcElem.type = "video/mp4";
+								//this.video.src = str;
+								this.video.appendChild(srcElem);
+								//this.video.setAttribute(str+ "?t="+(+new Date()));
 								this.video.load();
 							}
 						}

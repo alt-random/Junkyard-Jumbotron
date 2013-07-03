@@ -759,7 +759,7 @@ Server.prototype = {
 			trace(client.jumbotron.name, client.type, client.idx,
 			      '<', data.cmd, data.args);
 		    else
-			trace(socket.sessionId,
+			trace(socket.id,
 			      '<', data.cmd, data.args);
 		}
 
@@ -796,8 +796,8 @@ Server.prototype = {
     setSocketClient: function setSocketClient(socket, client) {
 	if (client.socket != socket) {
 	    debug(client.jumbotron.name, client.type, client.idx,
-		  "connected to socket", socket.sessionId);
-	    this._socketMap[socket.sessionId] = { jName: client.jumbotron.name,
+		  "connected to socket", socket.id);
+	    this._socketMap[socket.id] = { jName: client.jumbotron.name,
 						  idx: client.idx,
 						  clientId: client.clientId,
 						  type: client.type };
@@ -805,12 +805,12 @@ Server.prototype = {
 	}
 	else {
 	    trace(client.jumbotron.name, client.type, client.idx,
-		  "already connected to socket", socket.sessionId);
+		  "already connected to socket", socket.id);
 	}
     },
 
     getSocketClient: function getSocketClient(socket, cb) {
-	var item = this._socketMap[socket.sessionId];
+	var item = this._socketMap[socket.id];
 	if (! item)
 	    return cb(null, null);
 	var getter = (item.type == "display")
@@ -827,11 +827,11 @@ Server.prototype = {
     },
 
     clearSocketClient: function clearSocketClient(socket) {
-	var item = this._socketMap[socket.sessionId];
+	var item = this._socketMap[socket.id];
 	if (item) {
 	    debug(item.jName, item.type, item.idx,
-		  "disconnected from", socket.sessionId);
- 	    delete this._socketMap[socket.sessionId];
+		  "disconnected from", socket.id);
+ 	    delete this._socketMap[socket.id];
 	    var getter = (item.type == "display")
 		? 'getDisplay'
 		: 'getController';
@@ -895,7 +895,7 @@ Server.prototype = {
 		logger(client.jumbotron.name, client.type,
 		       client.idx, ':', args.msg);
 	    else
-		logger(socket.sessionId, ':', args.msg);
+		logger(socket.id, ':', args.msg);
 	}
     },
 

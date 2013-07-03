@@ -3,6 +3,9 @@ html(lang="en")
   head
     title Junkyard Jumbotron
     meta(http-equiv="refresh", content="3600")
+    meta(content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0", name="viewport")
+    meta(name="viewport", content="width=device-width, user-scalable=0")
+
     link(rel="stylesheet", href="css/jjdisplay.css", type="text/css")
 
     script(type="text/javascript", src="socket.io/socket.io.js")
@@ -25,4 +28,6 @@ html(lang="en")
     div#finalcrop
       div#crop
         div#img
-        video#vid
+        div#vidcont
+          video#vid
+          
